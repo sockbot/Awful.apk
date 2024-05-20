@@ -146,7 +146,7 @@ public class ImgurUploadRequest extends Request<JSONObject> {
                               @NonNull Response.Listener<JSONObject> jsonResponseListener,
                               @Nullable Response.ErrorListener errorListener) {
         this(true, jsonResponseListener, errorListener);
-        attachParams.addBinaryBody("image", imageStream);
+        attachParams.addBinaryBody("image", imageStream, ContentType.DEFAULT_BINARY, "Awful image");
         httpEntity = attachParams.build();
     }
 
