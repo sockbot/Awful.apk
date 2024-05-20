@@ -189,6 +189,8 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
     private final LinkedList<AwfulStackEntry> backStack = new LinkedList<>();
 	private boolean bypassBackStack = false;
 
+	private boolean zoomEnabled = false;
+
     private String mTitle = null;
 	private String postJump = "";
 	private int savedScrollPosition = 0;
@@ -1213,6 +1215,11 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 		}
 
 		@JavascriptInterface
+		public void setZoomEnabled(boolean zoomOn) {
+			zoomEnabled = zoomOn;
+		}
+
+		@JavascriptInterface
 		public void popupText(String text) {
 			Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
 		}
@@ -1327,13 +1334,10 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 					.setSubtitle("None of your apps want to open this " + intentUri.getScheme() + ":\\\\ link. Try installing an app that is less picky")
 					.show();
 		}
-
 	}
 
 	public void displayImage(String url){
-		Intent intent = BasicActivity.Companion.intentFor(ImageViewFragment.class, getActivity(), "");
-		intent.putExtra(ImageViewFragment.EXTRA_IMAGE_URL, url);
-		startActivity(intent);
+		mThreadView.runJavascript(String.format("showImageZoom('%s')", url));
 	}
 	
 	@Override
@@ -1758,6 +1762,10 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 	
 	@Override
 	public boolean onBackPressed() {
+		if(zoomEnabled) {
+			mThreadView.runJavascript("exitImageZoom()");
+			return true;
+		}
 		if(backStackCount() > 0){
 			popThread();
 			return true;
