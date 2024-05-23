@@ -139,6 +139,10 @@ abstract class AwfulFragment : Fragment(), AwfulPreferences.AwfulPreferenceUpdat
         awfulActivity?.apply { runOnUiThread { showPostComposer(threadId, type, postId) } }
     }
 
+    fun displayPostThreadDialog(forumId: Int) {
+        awfulActivity?.apply { runOnUiThread { showThreadComposer(forumId) } }
+    }
+
     protected fun setProgress(percent: Int) {
         progressPercent = percent
         if (progressPercent > 0) {

@@ -166,6 +166,10 @@ public class ThreadIconPicker extends Fragment {
         }
     }
 
+    public void useIcon(@NonNull String iconId, @NonNull String iconUrl) {
+        AwfulPostIcon newIcon = new AwfulPostIcon(iconId, iconUrl, getContext());
+        useIcon(newIcon);
+    }
 
     /**
      * Get the currently selected icon.

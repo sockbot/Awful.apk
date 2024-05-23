@@ -49,7 +49,7 @@ public class AwfulPostIcon {
     public final int drawableId;
     public Drawable drawable = null;
 
-    private AwfulPostIcon(@NonNull String iconId, @NonNull String iconUrl, @NonNull Context context) {
+    public AwfulPostIcon(@NonNull String iconId, @NonNull String iconUrl, @NonNull Context context) {
         this.iconId = iconId;
         this.iconUrl = iconUrl;
         drawableId = getIconResId(iconUrl, context);

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/post_thread"
+        android:icon="@drawable/ic_just_post"
+        android:title="@string/thread_just_post"
+        app:showAsAction="ifRoom"
+        />
+</menu>

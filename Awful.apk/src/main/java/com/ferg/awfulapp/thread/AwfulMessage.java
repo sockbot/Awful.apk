@@ -59,6 +59,8 @@ public class AwfulMessage extends AwfulPagedItem {
 	public static final Uri CONTENT_URI = Uri.parse("content://" + Constants.AUTHORITY + PATH);
 	public static final String PATH_REPLY     = "/draftreplies";
 	public static final Uri CONTENT_URI_REPLY = Uri.parse("content://" + Constants.AUTHORITY + PATH_REPLY);
+	public static final String PATH_THREAD     = "/draftthreads";
+	public static final Uri CONTENT_URI_THREAD = Uri.parse("content://" + Constants.AUTHORITY + PATH_THREAD);
 
 	public static final String ID = "_id";
 	public static final String TITLE 		="title";
@@ -76,6 +78,11 @@ public class AwfulMessage extends AwfulPagedItem {
 	public static final String REPLY_ATTACHMENT = "attachment";
 	public static final String REPLY_SIGNATURE = "signature";
 	public static final String REPLY_DISABLE_SMILIES = "disablesmilies";
+
+	public static final String POST_CONTENT = "post_content";
+	public static final String POST_SUBJECT = "post_subject";
+	public static final String POST_ICON_ID = "post_icon_id";
+	public static final String POST_ICON_URL = "post_icon_url";
 	public static final String FOLDER = "folder";
 
 	public static final int TYPE_PM = 1;
