@@ -362,7 +362,7 @@ public class PostThreadFragment extends AwfulFragment {
                     // If we're quoting something, stick it after the draft thread (and add some whitespace too)
                     messageComposer.setText(newContent, true);
                     subject.setText(draft.subject);
-                    if(draft.iconId != null && draft.iconUrl != null){
+                    if(draft.iconId != null && draft.iconUrl != null && draft.iconUrl.length() > 0){
                         threadIconPicker.useIcon(draft.iconId, draft.iconUrl);
                     }
                 })

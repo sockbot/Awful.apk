@@ -227,6 +227,7 @@ public class Constants {
 
     public static final int AWFUL_PERMISSION_READ_EXTERNAL_STORAGE = 123;
     public static final int AWFUL_PERMISSION_WRITE_EXTERNAL_STORAGE = 124;
+    public static final int AWFUL_PERMISSION_READ_MEDIA_IMAGES = 125;
 
     public enum POST_ICON_REQUEST_TYPES {
         FORUM_POST, PM

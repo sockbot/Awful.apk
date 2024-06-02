@@ -23,7 +23,7 @@ class SendThreadRequest(context: Context, reply: ContentValues)
             add(PARAM_SUBJECT, NetworkUtils.encodeHtml(reply.getAsString(AwfulMessage.POST_SUBJECT)))
             add(PARAM_MESSAGE, NetworkUtils.encodeHtml(reply.getAsString(AwfulMessage.POST_CONTENT)))
             add(PARAM_PARSEURL, YES)
-            add("iconid", reply.getAsString(AwfulMessage.REPLY_ICON))
+            add("iconid", reply.getAsString(AwfulMessage.POST_ICON_ID))
             if (reply.getAsString(AwfulPost.FORM_BOOKMARK).equals("checked", ignoreCase = true)) {
                 add(PARAM_BOOKMARK, YES)
             }

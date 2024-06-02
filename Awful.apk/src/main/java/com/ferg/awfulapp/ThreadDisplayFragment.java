@@ -1217,6 +1217,13 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 		@JavascriptInterface
 		public void setZoomEnabled(boolean zoomOn) {
 			zoomEnabled = zoomOn;
+			if (zoomOn) {
+				haltSwipe();
+				getSwipyLayout().setEnabled(false);
+			} else {
+				resumeSwipe();
+				getSwipyLayout().setEnabled(!getPrefs().disablePullNext);
+			}
 		}
 
 		@JavascriptInterface

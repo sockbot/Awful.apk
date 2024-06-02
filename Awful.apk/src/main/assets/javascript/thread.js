@@ -310,7 +310,7 @@ function showReadPosts() {
  * @param {string} url url to zoom into
  */
 function showImageZoom(url) {
-	listener.haltSwipe();
+	listener.setZoomEnabled(true);
 	var zoom = document.createElement('div');
 	zoom.setAttribute('id', 'zoom');
 	zoom.classList.add('zoom-enabled');
@@ -417,7 +417,6 @@ function showImageZoom(url) {
       imageX = imageCurrentX;
       imageY = imageCurrentY;
     });
-	listener.setZoomEnabled(true);
 }
 
 /**
@@ -427,7 +426,6 @@ function exitImageZoom() {
 	if(!document.getElementById('zoom')){ return }
     document.getElementById('zoom').remove();
     document.getElementById('zoom-close').remove();
-	listener.resumeSwipe();
 	listener.setZoomEnabled(false);
 }
 
@@ -496,7 +494,7 @@ function changeFontFace(font) {
 		var styleElement = document.createElement('style');
 		styleElement.id = 'font-face';
 		styleElement.setAttribute('type', 'text/css');
-		styleElement.textContent = '@font-face { font-family: userselected; src: url(\'content://com.ferg.awfulapp.webprovider/' + font + '\'); }';
+		styleElement.textContent = '@font-face { font-family: userselected; src: url(\'file:///android_asset/' + font + '\'); }';
 		document.head.appendChild(styleElement);
 	}
 }
