@@ -32,14 +32,14 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
-import androidx.annotation.StringRes
-import androidx.fragment.app.Fragment
-import androidx.loader.app.LoaderManager
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.fragment.app.Fragment
+import androidx.loader.app.LoaderManager
 import com.android.volley.Request
 import com.android.volley.VolleyError
 import com.ferg.awfulapp.network.NetworkUtils
@@ -105,6 +105,7 @@ abstract class AwfulFragment : Fragment(), AwfulPreferences.AwfulPreferenceUpdat
         progressBar = v.findViewById(R.id.progress_bar)
         probationBar = v.findViewById(R.id.probation_bar)
         probationBar?.setListener { navigate(NavigationEvent.LepersColony(prefs.userId)) }
+        awfulActivity!!.setPreferredFont(v)
         return v
     }
 

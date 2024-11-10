@@ -33,16 +33,22 @@ package com.ferg.awfulapp.search
 
 import android.app.ProgressDialog
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.text.Html
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.TextView
+import androidx.core.view.forEach
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.text.Html
-import android.view.*
-import android.widget.EditText
-import android.widget.TextView
 import com.android.volley.VolleyError
 import com.ferg.awfulapp.AwfulFragment
+import com.ferg.awfulapp.FontManager
 import com.ferg.awfulapp.NavigationEvent
 import com.ferg.awfulapp.NavigationEvent.Companion.parse
 import com.ferg.awfulapp.R
@@ -57,10 +63,10 @@ import com.ferg.awfulapp.thread.AwfulSearch
 import com.ferg.awfulapp.thread.AwfulSearchResult
 import com.ferg.awfulapp.thread.AwfulURL
 import com.ferg.awfulapp.widget.SwipyRefreshLayout
+import com.google.android.material.snackbar.Snackbar
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection
 import org.apache.commons.lang3.ArrayUtils
 import timber.log.Timber
-import java.util.*
 
 class SearchFragment : AwfulFragment(), com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout.OnRefreshListener {
 
@@ -103,7 +109,10 @@ class SearchFragment : AwfulFragment(), com.orangegangsters.github.swipyrefreshl
     override fun onCreateView(aInflater: LayoutInflater, aContainer: ViewGroup?, aSavedState: Bundle?): View? {
         super.onCreateView(aInflater, aContainer, aSavedState)
         Timber.v("onCreateView")
-        return inflateView(R.layout.search, aContainer, aInflater)
+        val result = inflateView(R.layout.search, aContainer, aInflater)
+
+        awfulActivity?.setPreferredFont(result)
+        return result
     }
 
 
@@ -171,8 +180,10 @@ class SearchFragment : AwfulFragment(), com.orangegangsters.github.swipyrefreshl
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater!!.inflate(R.menu.search, menu)
+        val fm = FontManager.getInstance()
         val filterMenu = menu?.findItem(R.id.search_terms)!!.subMenu
         SearchFilter.FilterType.values().forEach { filterMenu?.add(it.label) }
+        filterMenu?.forEach { fm.setMenuItemFont(it) }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -193,6 +204,15 @@ class SearchFragment : AwfulFragment(), com.orangegangsters.github.swipyrefreshl
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        val fm = FontManager.getInstance()
+        for (i in 0 until menu.size()) {
+            fm.setMenuItemFont(menu.getItem(i))
+        }
     }
 
 
@@ -266,6 +286,7 @@ class SearchFragment : AwfulFragment(), com.orangegangsters.github.swipyrefreshl
                 self.setOnClickListener {
                     AwfulURL.parse(Constants.BASE_URL + threadLink).let(NavigationEvent::Url).let(::navigate)
                 }
+                awfulActivity?.setPreferredFont(holder.itemView)
             }
         }
 

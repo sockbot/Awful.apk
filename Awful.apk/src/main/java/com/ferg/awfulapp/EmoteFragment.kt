@@ -2,21 +2,22 @@ package com.ferg.awfulapp
 
 import android.database.Cursor
 import android.os.Bundle
-import com.google.android.material.tabs.TabLayout
-import androidx.core.app.*
-import androidx.loader.content.CursorLoader
-import androidx.loader.content.Loader
-import androidx.viewpager.widget.ViewPager
 import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
-import androidx.fragment.app.DialogFragment
+import android.widget.EditText
+import android.widget.GridView
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import androidx.loader.app.LoaderManager
+import androidx.loader.content.CursorLoader
+import androidx.loader.content.Loader
+import androidx.viewpager.widget.ViewPager
 import com.android.volley.VolleyError
 import com.ferg.awfulapp.constants.Constants
 import com.ferg.awfulapp.preferences.AwfulPreferences
@@ -29,6 +30,7 @@ import com.ferg.awfulapp.task.EmoteRequest
 import com.ferg.awfulapp.thread.AwfulEmote
 import com.ferg.awfulapp.util.PassiveTextWatcher
 import com.ferg.awfulapp.util.bind
+import com.google.android.material.tabs.TabLayout
 import timber.log.Timber
 
 /**
@@ -85,14 +87,16 @@ private object EmoteHistory {
  *
  * This must be created by a parent fragment that implements [EmotePickerListener]
  */
-class EmotePicker : DialogFragment() {
+class EmotePicker : AwfulDialogFragment() {
 
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,
             savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.emote_picker_container_fragment, container, false)
+        val view = inflater.inflate(R.layout.emote_picker_container_fragment, container, false);
+        awfulActivity.setPreferredFont(view)
+        return view;
     }
 
     override fun onActivityCreated(aSavedState: Bundle?) {
@@ -108,6 +112,10 @@ class EmotePicker : DialogFragment() {
                 tabLayout.getTabAt(i)!!.setIcon(page.iconResId).contentDescription = page.title
             }
         }
+    }
+
+    override fun getTitle(): String {
+        return "Emote"
     }
 
     fun onEmoteChosen(emoteCode: String) {
@@ -205,8 +213,12 @@ abstract class EmoteGridFragment : AwfulFragment() {
             inflater: LayoutInflater,
             container: ViewGroup?,
             savedInstanceState: Bundle?
-    ): View? =
-            inflater.inflate(layoutId, container, false)
+    ): View? {
+        val view = inflater.inflate(layoutId, container, false);
+        awfulActivity?.setPreferredFont(view)
+        return view;
+    }
+
 
 
     /**

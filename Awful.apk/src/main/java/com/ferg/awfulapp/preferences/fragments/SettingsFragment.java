@@ -1,21 +1,32 @@
 package com.ferg.awfulapp.preferences.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.collection.ArrayMap;
+import androidx.preference.PreferenceGroup;
+import androidx.preference.PreferenceGroupAdapter;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.PreferenceViewHolder;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.ferg.awfulapp.AwfulActivity;
 import com.ferg.awfulapp.NavigationEvent;
 import com.ferg.awfulapp.NavigationEventHandler;
 import com.ferg.awfulapp.R;
@@ -41,7 +52,7 @@ import java.util.Map;
  * {@link SettingsActivity#PREFERENCE_XML_FILES} so it can be
  * automatically checked for defaults!</p>
  */
-public abstract class SettingsFragment extends PreferenceFragment implements NavigationEventHandler {
+public abstract class SettingsFragment extends PreferenceFragmentCompat implements NavigationEventHandler {
 
     public static final String TAG = "SettingsFragment";
     private volatile boolean isInflated;
@@ -113,6 +124,7 @@ public abstract class SettingsFragment extends PreferenceFragment implements Nav
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         mPrefs = ((SettingsActivity) getActivity()).prefs;
 
         try {
@@ -132,14 +144,43 @@ public abstract class SettingsFragment extends PreferenceFragment implements Nav
         super.onActivityCreated(savedInstanceState);
         // for some reason, if you theme android:listDivider it won't show up in the preference list
         // so doing this directly seems to be the only way to theme it? Can't just get() it either
-        ListView listview = (ListView) getView().findViewById(android.R.id.list);
         Drawable divider = getResources().getDrawable(R.drawable.list_divider);
         TypedValue colour = new TypedValue();
         getActivity().getTheme().resolveAttribute(android.R.attr.listDivider, colour, true);
         divider.setColorFilter(colour.data, PorterDuff.Mode.SRC_IN);
-        listview.setDivider(divider);
+        setDivider(divider);
     }
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View result = super.onCreateView(inflater, container, savedInstanceState);
+
+        ((AwfulActivity) getActivity()).setPreferredFont(result);
+
+        return result;
+    }
+
+    @SuppressLint("RestrictedApi")
+    class AwfulPreferenceAdapter extends PreferenceGroupAdapter {
+        String TAG = "MyAdapter";
+        public AwfulPreferenceAdapter(PreferenceGroup preferenceGroup) {
+            super(preferenceGroup);
+        }
+
+        @NonNull
+        @Override
+        public PreferenceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            PreferenceViewHolder holder = super.onCreateViewHolder(parent, viewType);
+            ((AwfulActivity)getActivity()).setPreferredFont(holder.itemView);
+            return holder;
+        }
+    }
+
+    @NonNull
+    @Override
+    protected RecyclerView.Adapter onCreateAdapter(@NonNull PreferenceScreen preferenceScreen) {
+        return new AwfulPreferenceAdapter(preferenceScreen);
+    }
 
     //
     // Navigation
@@ -305,4 +346,8 @@ public abstract class SettingsFragment extends PreferenceFragment implements Nav
         }
     }
 
+    @Override
+    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+        return;
+    }
 }

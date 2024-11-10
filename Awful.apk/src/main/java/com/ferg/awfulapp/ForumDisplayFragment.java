@@ -161,6 +161,7 @@ public class ForumDisplayFragment extends AwfulFragment implements SwipyRefreshL
 
 		refreshProbationBar();
 
+        getAwfulActivity().setPreferredFont(result);
         return result;
     }
 

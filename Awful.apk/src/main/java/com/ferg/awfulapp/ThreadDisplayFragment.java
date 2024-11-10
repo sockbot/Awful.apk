@@ -540,6 +540,10 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 		if(yospos != null){
 			yospos.setVisible(mParentForumId == Constants.FORUM_ID_YOSPOS);
 		}
+		FontManager fm = FontManager.getInstance();
+		for (int i = 0; i < menu.size(); i++) {
+			fm.setMenuItemFont(menu.getItem(i));
+		}
     }
     
     @Override

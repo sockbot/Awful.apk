@@ -98,11 +98,9 @@ public class AwfulWebView extends WebView {
             webSettings.setMediaPlaybackRequiresUserGesture(false);
         }
 
-        if (prefs.inlineTweets) {
-            webSettings.setAllowUniversalAccessFromFileURLs(true);
-            webSettings.setAllowFileAccess(true);
-            webSettings.setAllowContentAccess(true);
-        }
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
     }
 
 

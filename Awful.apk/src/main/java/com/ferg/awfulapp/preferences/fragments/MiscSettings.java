@@ -1,8 +1,8 @@
 package com.ferg.awfulapp.preferences.fragments;
 
 import android.app.Dialog;
-import android.preference.ListPreference;
-import android.preference.Preference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 import androidx.annotation.NonNull;
 
 import android.view.View;

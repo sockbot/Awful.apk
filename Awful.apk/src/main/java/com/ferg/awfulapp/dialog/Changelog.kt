@@ -1,8 +1,9 @@
 package com.ferg.awfulapp.dialog
 
 import android.content.Context
-import androidx.appcompat.app.AlertDialog
 import android.text.Html
+import androidx.appcompat.app.AlertDialog
+import com.ferg.awfulapp.AwfulActivity
 import com.ferg.awfulapp.R
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -32,10 +33,16 @@ object Changelog {
         }
 
         // Build a basic dialog with the changelog html - tag handler required pre-Nougat
-        AlertDialog.Builder(context)
+        val changelogAlert = AlertDialog.Builder(context)
                 .setTitle(context.getString(R.string.changelog_dialog_title))
                 .setMessage(Html.fromHtml(changelogText, null, listTagHandler))
-                .setPositiveButton(context.getString(R.string.alert_ok)) { dialog, _ -> dialog.dismiss() }.show()
+                .setPositiveButton(context.getString(R.string.alert_ok)) { dialog, _ -> dialog.dismiss() }.create()
+
+        changelogAlert.show();
+        val activity = context as AwfulActivity;
+        activity.setPreferredFont(changelogAlert.findViewById(androidx.appcompat.R.id.alertTitle))
+        activity.setPreferredFont(changelogAlert.findViewById(android.R.id.message))
+        activity.setPreferredFont(changelogAlert.findViewById(android.R.id.button1))
 
     }
 

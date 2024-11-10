@@ -82,6 +82,7 @@ public abstract class AwfulDialogFragment extends DialogFragment implements Acti
     	if(progressBar instanceof AwfulProgressBar){
     		this.progressBar = (AwfulProgressBar) progressBar;
     	}
+		getAwfulActivity().setPreferredFont(v);
     	return v;
     }
     

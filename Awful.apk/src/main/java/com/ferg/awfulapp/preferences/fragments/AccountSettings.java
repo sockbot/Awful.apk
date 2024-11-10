@@ -4,13 +4,14 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
-import android.preference.Preference;
+import androidx.preference.Preference;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.android.volley.VolleyError;
+import com.ferg.awfulapp.AwfulActivity;
 import com.ferg.awfulapp.R;
 import com.ferg.awfulapp.network.NetworkUtils;
 import com.ferg.awfulapp.preferences.Keys;
@@ -66,6 +67,7 @@ public class AccountSettings extends SettingsFragment {
         @Override
         public boolean onPreferenceClick(Preference preference) {
             final Dialog dialog = ProgressDialog.show(getActivity(), "Loading", "Fetching Account Features", true);
+            ((AwfulActivity)getActivity()).setPreferredFont(dialog.findViewById(android.R.id.title));
             NetworkUtils.queueRequest(new FeatureRequest(getActivity())
                     .build(null, new AwfulRequest.AwfulResultCallback<Void>() {
                         @Override

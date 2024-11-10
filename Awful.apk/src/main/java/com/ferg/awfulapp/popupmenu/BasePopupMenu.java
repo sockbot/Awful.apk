@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.ferg.awfulapp.AwfulDialogFragment;
 import com.ferg.awfulapp.R;
 import com.ferg.awfulapp.databinding.ActionItemBinding;
 import com.ferg.awfulapp.provider.ColorProvider;
@@ -31,7 +32,7 @@ import java.util.List;
  * the menu items as an enum, add whichever items you need, and switch on the enum cases to handle
  * the user's selection. Just pass the enum as the type parameter for the class.
  */
-public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragment {
+public abstract class BasePopupMenu<T extends AwfulAction> extends AwfulDialogFragment {
 
     /**
      * Can be used to set a callback that is called when an action is clicked.
@@ -81,6 +82,7 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
         actionsView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         getDialog().setCanceledOnTouchOutside(true);
+        getAwfulActivity().setPreferredFont(result);
         return result;
     }
 
@@ -103,12 +105,6 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
      */
     @NonNull
     abstract List<T> generateMenuItems();
-
-    /**
-     * The title to display on the dialog.
-     */
-    @NonNull
-    abstract String getTitle();
 
     /**
      * Called when the user selects one of your menu items.
@@ -147,6 +143,7 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
         @Override
         public ActionHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.action_item, parent, false);
+            getAwfulActivity().setPreferredFont(view);
             return new ActionHolder(view);
         }
 

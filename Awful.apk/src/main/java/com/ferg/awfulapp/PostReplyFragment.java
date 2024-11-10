@@ -172,6 +172,7 @@ public class PostReplyFragment extends AwfulFragment {
         super.onCreateView(aInflater, aContainer, aSavedState);
         Timber.v("onCreateView");
         View view = inflateView(R.layout.post_reply, aContainer, aInflater);
+        getAwfulActivity().setPreferredFont(view);
         return view;
     }
 
@@ -281,7 +282,7 @@ public class PostReplyFragment extends AwfulFragment {
      */
     private void loadReply(int mReplyType, int mThreadId, int mPostId) {
         progressDialog = ProgressDialog.show(getActivity(), "Loading", "Fetching Message...", true, true);
-
+        getAwfulActivity().setPreferredFont(progressDialog.findViewById(android.R.id.title));
         // create a callback to handle the reply data from the site
         AwfulRequest.AwfulResultCallback<ContentValues> loadCallback = new AwfulRequest.AwfulResultCallback<ContentValues>() {
             @Override
@@ -411,7 +412,7 @@ public class PostReplyFragment extends AwfulFragment {
 
         String message = String.format(template, type.toLowerCase(), previewText, epochToSimpleDuration(draft.timestamp));
         String positiveLabel = (mReplyType == TYPE_QUOTE) ? "Add" : "Use";
-        new AlertDialog.Builder(activity)
+        AlertDialog use = new AlertDialog.Builder(activity)
                 .setIcon(R.drawable.ic_reply_dark)
                 .setTitle(type)
                 .setMessage(Html.fromHtml(message))
@@ -427,6 +428,11 @@ public class PostReplyFragment extends AwfulFragment {
                 // avoid accidental draft losses by forcing a decision
                 .setCancelable(false)
                 .show();
+
+        getAwfulActivity().setPreferredFont(use.findViewById(androidx.appcompat.R.id.alertTitle));
+        getAwfulActivity().setPreferredFont(use.findViewById(android.R.id.message));
+        getAwfulActivity().setPreferredFont(use.findViewById(android.R.id.button1));
+        getAwfulActivity().setPreferredFont(use.findViewById(android.R.id.button2));
     }
 
 
@@ -439,12 +445,13 @@ public class PostReplyFragment extends AwfulFragment {
      * Display a dialog allowing the user to submit or preview their post
      */
     private void showSubmitDialog() {
-        new AlertDialog.Builder(getActivity())
+        AlertDialog submit = new AlertDialog.Builder(getActivity())
                 .setTitle(String.format("Confirm %s?", mReplyType == TYPE_EDIT ? "Edit" : "Post"))
                 .setPositiveButton(R.string.submit,
                         (dialog, button) -> {
                             if (progressDialog == null && getActivity() != null) {
                                 progressDialog = ProgressDialog.show(getActivity(), "Posting", "Hopefully it didn't suck...", true, true);
+                                getAwfulActivity().setPreferredFont(progressDialog.findViewById(android.R.id.title));
                             }
                             saveReply();
                             submitPost();
@@ -453,6 +460,12 @@ public class PostReplyFragment extends AwfulFragment {
                 .setNegativeButton(R.string.cancel, (dialog, button) -> {
                 })
                 .show();
+
+        getAwfulActivity().setPreferredFont(submit.findViewById(androidx.appcompat.R.id.alertTitle));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.message));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button1));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button2));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button3));
     }
 
 
@@ -647,7 +660,7 @@ public class PostReplyFragment extends AwfulFragment {
             leave(RESULT_CANCELLED);
             return;
         }
-        new AlertDialog.Builder(activity)
+        AlertDialog save = new AlertDialog.Builder(activity)
                 .setIcon(R.drawable.ic_reply_dark)
                 .setMessage(String.format("Save this %s?", mReplyType == TYPE_EDIT ? "edit" : "post"))
                 .setPositiveButton(R.string.save, (dialog, button) -> {
@@ -665,6 +678,11 @@ public class PostReplyFragment extends AwfulFragment {
                 .setCancelable(true)
                 .show();
 
+        getAwfulActivity().setPreferredFont(save.findViewById(androidx.appcompat.R.id.alertTitle));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.message));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.button1));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.button2));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.button3));
     }
 
 
@@ -1047,6 +1065,7 @@ public class PostReplyFragment extends AwfulFragment {
         if (threadTitleView != null) {
             threadTitleView.setText(mThreadTitle == null ? "" : mThreadTitle);
         }
+        getAwfulActivity().setPreferredFont(threadTitleView);
     }
 
     @Override

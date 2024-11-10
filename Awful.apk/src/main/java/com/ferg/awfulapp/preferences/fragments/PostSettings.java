@@ -3,7 +3,7 @@ package com.ferg.awfulapp.preferences.fragments;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.graphics.Typeface;
-import android.preference.Preference;
+import androidx.preference.Preference;
 import androidx.annotation.NonNull;
 import android.util.Log;
 import android.util.TypedValue;

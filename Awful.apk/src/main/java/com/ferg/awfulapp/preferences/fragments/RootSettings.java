@@ -1,17 +1,23 @@
 package com.ferg.awfulapp.preferences.fragments;
 
 import android.app.Activity;
+import androidx.appcompat.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.preference.Preference;
+import android.content.res.Resources;
+import androidx.preference.Preference;
 import androidx.annotation.NonNull;
 
+import com.ferg.awfulapp.AwfulActivity;
 import com.ferg.awfulapp.NavigationEvent;
 import com.ferg.awfulapp.R;
 import com.ferg.awfulapp.constants.Constants;
 import com.ferg.awfulapp.dialog.Changelog;
 import com.ferg.awfulapp.preferences.SettingsActivity;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -66,7 +72,32 @@ public class RootSettings extends SettingsFragment {
     private class AboutListener implements Preference.OnPreferenceClickListener {
         @Override
         public boolean onPreferenceClick(Preference preference) {
-            getActivity().showDialog(SettingsActivity.DIALOG_ABOUT);
+            CharSequence app_version = getText(R.string.app_name);
+            try {
+                app_version = app_version + " " +
+                        getActivity().getPackageManager().getPackageInfo(getActivity().getPackageName(), 0)
+                                .versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                // rather unlikely, just show app_name without version
+            }
+            // Build the text for the About dialog
+            Resources res = getResources();
+            String aboutText = getString(R.string.about_contributors_title) + "\n\n";
+            aboutText += StringUtils.join(res.getStringArray(R.array.about_contributors_array), '\n');
+            aboutText += "\n\n" + getString(R.string.about_libraries_title) + "\n\n";
+            aboutText += StringUtils.join(res.getStringArray(R.array.about_libraries_array), '\n');
+            Dialog about = new AlertDialog.Builder(getActivity())
+                    .setTitle(app_version)
+                    .setMessage(aboutText)
+                    .setNeutralButton(android.R.string.ok, (dialog, which) -> {
+                    })
+                    .show();
+
+            AwfulActivity activity = (AwfulActivity) getActivity();
+            activity.setPreferredFont(about.findViewById(androidx.appcompat.R.id.alertTitle));
+            activity.setPreferredFont(about.findViewById(android.R.id.message));
+            activity.setPreferredFont(about.findViewById(android.R.id.button3));
+
             return true;
         }
     }

@@ -114,6 +114,7 @@ public class PrivateMessageListFragment extends AwfulFragment implements SwipeRe
         mFAB.setOnClickListener(onButtonClick);
         mFAB.setVisibility((getPrefs().noFAB ? View.GONE : View.VISIBLE));
 
+        getAwfulActivity().setPreferredFont(result);
         return result;
     }
 
