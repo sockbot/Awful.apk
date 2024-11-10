@@ -35,7 +35,10 @@ public abstract class Keys {
             PAGE_LAYOUT,
             TRANSFORMER,
             FAVOURITE_FORUMS,
-            RECENT_EMOTES
+            RECENT_EMOTES,
+            IMGUR_ACCOUNT,
+            IMGUR_ACCOUNT_TOKEN,
+            IMGUR_REFRESH_TOKEN
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface StringPreference {
@@ -77,7 +80,8 @@ public abstract class Keys {
 
     // longs
     @IntDef({
-            PROBATION_TIME
+            PROBATION_TIME,
+            IMGUR_TOKEN_EXPIRES
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface LongPreference {
@@ -132,6 +136,7 @@ public abstract class Keys {
             FORUM_INDEX_SHOW_SECTIONS,
             FORUM_INDEX_SHOW_SUBTITLES,
             FORUM_INDEX_HIDE_SUBFORUMS,
+            POST_WARNING_ACCEPTED
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface BooleanPreference {
@@ -143,6 +148,10 @@ public abstract class Keys {
     public static final int THEME = R.string.pref_key_theme;
     public static final int LAUNCHER_ICON = R.string.pref_key_launcher_icon;
     public static final int LAYOUT = R.string.pref_key_layout;
+    public static final int IMGUR_ACCOUNT = R.string.pref_key_imgur_account;
+    public static final int IMGUR_ACCOUNT_TOKEN = R.string.pref_key_imgur_account_token;
+    public static final int IMGUR_REFRESH_TOKEN = R.string.pref_key_imgur_refresh_token;
+    public static final int IMGUR_TOKEN_EXPIRES = R.string.pref_key_imgur_token_expires;
     public static final int IMGUR_THUMBNAILS = R.string.pref_key_imgur_thumbnails;
     public static final int PREFERRED_FONT = R.string.pref_key_preferred_font;
     public static final int IGNORE_FORMKEY = R.string.pref_key_ignore_formkey;
@@ -216,4 +225,6 @@ public abstract class Keys {
 
     public static final int MARKED_USERS = R.string.pref_key_marked_users;
     public static final int BLOCKED_AVATAR_URLS = R.string.pref_key_blocked_avatar_urls;
+
+    public static final int POST_WARNING_ACCEPTED = R.string.pref_key_post_warning_accepted;
 }

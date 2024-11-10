@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <item
+        android:id="@+id/submit_button"
+        android:icon="@drawable/ic_send"
+        android:title="@string/submit"
+        android:orderInCategory="99999"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/signature"
+        android:checkable="true"
+        android:title="@string/signature"
+        app:showAsAction="never|withText">
+    </item>
+    <item
+        android:id="@+id/disableEmots"
+        android:checkable="true"
+        android:title="@string/disableEmots"
+        app:showAsAction="never|withText">
+    </item>
+    <item
+        android:id="@+id/add_attachment"
+        android:title="@string/add_attachment"
+        app:showAsAction="never|withText">
+    </item>
+    <item
+        android:id="@+id/remove_attachment"
+        android:title="@string/remove_attachment"
+        android:visible="false"
+        app:showAsAction="never|withText">
+    </item>
+</menu>

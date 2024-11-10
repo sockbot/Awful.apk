@@ -48,6 +48,8 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.ferg.awfulapp.databinding.PostReplyActivityBinding;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
@@ -92,11 +94,10 @@ import com.ferg.awfulapp.util.AwfulUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
+import org.w3c.dom.Text;
 
 import java.io.File;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import timber.log.Timber;
 
 import static com.ferg.awfulapp.constants.Constants.ATTACHMENT_MAX_BYTES;
@@ -118,8 +119,6 @@ public class PostReplyFragment extends AwfulFragment {
     private static final String TAG = "PostReplyFragment";
 
     // UI components
-    @BindView(R.id.thread_title)
-    TextView threadTitleView = null;
     private MessageComposer messageComposer;
     @Nullable
     private ProgressDialog progressDialog;
@@ -172,16 +171,16 @@ public class PostReplyFragment extends AwfulFragment {
     public View onCreateView(LayoutInflater aInflater, ViewGroup aContainer, Bundle aSavedState) {
         super.onCreateView(aInflater, aContainer, aSavedState);
         Timber.v("onCreateView");
-        return inflateView(R.layout.post_reply, aContainer, aInflater);
+        View view = inflateView(R.layout.post_reply, aContainer, aInflater);
+        getAwfulActivity().setPreferredFont(view);
+        return view;
     }
-
 
     @Override
     public void onActivityCreated(Bundle aSavedState) {
         super.onActivityCreated(aSavedState);
         Timber.v("onActivityCreated");
         Activity activity = getActivity();
-        ButterKnife.bind(this, activity);
 
         messageComposer = (MessageComposer) getChildFragmentManager().findFragmentById(R.id.message_composer_fragment);
         messageComposer.setBackgroundColor(ColorProvider.BACKGROUND.getColor());
@@ -224,17 +223,19 @@ public class PostReplyFragment extends AwfulFragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == ADD_ATTACHMENT) {
-                if (AwfulUtils.isMarshmallow()) {
+                if (AwfulUtils.isMarshmallow23()) {
                     int permissionCheck = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE);
                     if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
                         this.attachmentData = data;
-                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.AWFUL_PERMISSION_READ_EXTERNAL_STORAGE);
-                    } else {
-                        addAttachment(data);
+                        if (AwfulUtils.isTiramisu33()) {
+                            requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, Constants.AWFUL_PERMISSION_READ_MEDIA_IMAGES);
+                        } else {
+                            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.AWFUL_PERMISSION_READ_EXTERNAL_STORAGE);
+                        }
+                        return;
                     }
-                } else {
-                    addAttachment(data);
                 }
+                addAttachment(data);
             }
         }
     }
@@ -244,6 +245,7 @@ public class PostReplyFragment extends AwfulFragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case Constants.AWFUL_PERMISSION_READ_EXTERNAL_STORAGE:
+            case Constants.AWFUL_PERMISSION_READ_MEDIA_IMAGES:
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     addAttachment();
@@ -280,7 +282,7 @@ public class PostReplyFragment extends AwfulFragment {
      */
     private void loadReply(int mReplyType, int mThreadId, int mPostId) {
         progressDialog = ProgressDialog.show(getActivity(), "Loading", "Fetching Message...", true, true);
-
+        getAwfulActivity().setPreferredFont(progressDialog.findViewById(android.R.id.title));
         // create a callback to handle the reply data from the site
         AwfulRequest.AwfulResultCallback<ContentValues> loadCallback = new AwfulRequest.AwfulResultCallback<ContentValues>() {
             @Override
@@ -410,7 +412,7 @@ public class PostReplyFragment extends AwfulFragment {
 
         String message = String.format(template, type.toLowerCase(), previewText, epochToSimpleDuration(draft.timestamp));
         String positiveLabel = (mReplyType == TYPE_QUOTE) ? "Add" : "Use";
-        new AlertDialog.Builder(activity)
+        AlertDialog use = new AlertDialog.Builder(activity)
                 .setIcon(R.drawable.ic_reply_dark)
                 .setTitle(type)
                 .setMessage(Html.fromHtml(message))
@@ -426,6 +428,11 @@ public class PostReplyFragment extends AwfulFragment {
                 // avoid accidental draft losses by forcing a decision
                 .setCancelable(false)
                 .show();
+
+        getAwfulActivity().setPreferredFont(use.findViewById(androidx.appcompat.R.id.alertTitle));
+        getAwfulActivity().setPreferredFont(use.findViewById(android.R.id.message));
+        getAwfulActivity().setPreferredFont(use.findViewById(android.R.id.button1));
+        getAwfulActivity().setPreferredFont(use.findViewById(android.R.id.button2));
     }
 
 
@@ -438,12 +445,13 @@ public class PostReplyFragment extends AwfulFragment {
      * Display a dialog allowing the user to submit or preview their post
      */
     private void showSubmitDialog() {
-        new AlertDialog.Builder(getActivity())
+        AlertDialog submit = new AlertDialog.Builder(getActivity())
                 .setTitle(String.format("Confirm %s?", mReplyType == TYPE_EDIT ? "Edit" : "Post"))
                 .setPositiveButton(R.string.submit,
                         (dialog, button) -> {
                             if (progressDialog == null && getActivity() != null) {
                                 progressDialog = ProgressDialog.show(getActivity(), "Posting", "Hopefully it didn't suck...", true, true);
+                                getAwfulActivity().setPreferredFont(progressDialog.findViewById(android.R.id.title));
                             }
                             saveReply();
                             submitPost();
@@ -452,6 +460,12 @@ public class PostReplyFragment extends AwfulFragment {
                 .setNegativeButton(R.string.cancel, (dialog, button) -> {
                 })
                 .show();
+
+        getAwfulActivity().setPreferredFont(submit.findViewById(androidx.appcompat.R.id.alertTitle));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.message));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button1));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button2));
+        getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button3));
     }
 
 
@@ -646,7 +660,7 @@ public class PostReplyFragment extends AwfulFragment {
             leave(RESULT_CANCELLED);
             return;
         }
-        new AlertDialog.Builder(activity)
+        AlertDialog save = new AlertDialog.Builder(activity)
                 .setIcon(R.drawable.ic_reply_dark)
                 .setMessage(String.format("Save this %s?", mReplyType == TYPE_EDIT ? "edit" : "post"))
                 .setPositiveButton(R.string.save, (dialog, button) -> {
@@ -664,6 +678,11 @@ public class PostReplyFragment extends AwfulFragment {
                 .setCancelable(true)
                 .show();
 
+        getAwfulActivity().setPreferredFont(save.findViewById(androidx.appcompat.R.id.alertTitle));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.message));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.button1));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.button2));
+        getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.button3));
     }
 
 
@@ -1042,9 +1061,11 @@ public class PostReplyFragment extends AwfulFragment {
      * Update the title view to show the current thread title, if we have it
      */
     private void updateThreadTitle() {
+        TextView threadTitleView = getActivity().findViewById(R.id.thread_title);
         if (threadTitleView != null) {
             threadTitleView.setText(mThreadTitle == null ? "" : mThreadTitle);
         }
+        getAwfulActivity().setPreferredFont(threadTitleView);
     }
 
     @Override

@@ -7,6 +7,11 @@ import android.os.Bundle;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.ferg.awfulapp.AwfulActivity;
+import com.ferg.awfulapp.FontManager;
+import com.ferg.awfulapp.NavigationEvent;
+import com.ferg.awfulapp.preferences.AwfulPreferences;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.view.SupportMenuInflater;
@@ -63,6 +68,7 @@ public class MessageComposer extends Fragment implements EmotePickerListener {
         View result = inflater.inflate(R.layout.message_composer, container, true);
         messageBox = result.findViewById(R.id.message_edit_text);
         addBbCodeToSelectionMenu(messageBox);
+        ((AwfulActivity) getActivity()).setPreferredFont(result);
         return result;
     }
 
@@ -84,6 +90,10 @@ public class MessageComposer extends Fragment implements EmotePickerListener {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.message_composer, menu);
+        FontManager fm = FontManager.getInstance();
+        for (int i = 0; i < menu.size(); i++) {
+            fm.setMenuItemFont(menu.getItem(i));
+        }
     }
 
 
@@ -129,10 +139,14 @@ public class MessageComposer extends Fragment implements EmotePickerListener {
                 insertWith(ImageInserter::smartInsert);
                 break;
             case R.id.bbcode_imgur:
-                ImgurInserter imgurInserter = new ImgurInserter();
-                imgurInserter.setTargetFragment(this, -1);
-                // TODO: 29/12/2017 switch this to childFragmentManager and test
-                imgurInserter.show(getFragmentManager(), "imgur uploader");
+                if (AwfulPreferences.getInstance().imgurAccount != null) {
+                    ImgurInserter imgurInserter = new ImgurInserter();
+                    imgurInserter.setTargetFragment(this, -1);
+                    // TODO: 29/12/2017 switch this to childFragmentManager and test
+                    imgurInserter.show(getFragmentManager(), "imgur uploader");
+                } else {
+                    ((AwfulActivity) getActivity()).navigate(new NavigationEvent.Settings("account"));
+                }
                 break;
             case R.id.bbcode_video:
                 insertWith(VideoInserter::smartInsert);
@@ -296,7 +310,7 @@ public class MessageComposer extends Fragment implements EmotePickerListener {
 
         editText.setCustomSelectionActionModeCallback(callback);
         // add it to the insert menu too for consistency, why not
-        if (AwfulUtils.isMarshmallow()) {
+        if (AwfulUtils.isMarshmallow23()) {
             // noinspection AndroidLintNewApi
             editText.setCustomInsertionActionModeCallback(callback);
         }

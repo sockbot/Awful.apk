@@ -38,7 +38,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -47,18 +46,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.ferg.awfulapp.search.SearchFilter;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import androidx.fragment.app.FragmentManager;
-import androidx.loader.app.LoaderManager;
-import androidx.core.content.ContextCompat;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
-import androidx.core.view.MenuItemCompat;
-import androidx.appcompat.widget.ShareActionProvider;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.view.InflateException;
@@ -69,7 +56,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -89,6 +75,7 @@ import com.ferg.awfulapp.preferences.Keys;
 import com.ferg.awfulapp.provider.AwfulProvider;
 import com.ferg.awfulapp.provider.AwfulTheme;
 import com.ferg.awfulapp.provider.ColorProvider;
+import com.ferg.awfulapp.search.SearchFilter;
 import com.ferg.awfulapp.task.AwfulRequest;
 import com.ferg.awfulapp.task.BookmarkRequest;
 import com.ferg.awfulapp.task.IgnoreRequest;
@@ -116,6 +103,7 @@ import com.ferg.awfulapp.webview.WebViewJsInterface;
 import com.ferg.awfulapp.widget.PageBar;
 import com.ferg.awfulapp.widget.PagePicker;
 import com.ferg.awfulapp.widget.WebViewSearchBar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 
@@ -129,7 +117,18 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.ShareActionProvider;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.MenuItemCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 import timber.log.Timber;
 
 /**
@@ -189,6 +188,8 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 	//oh god i'm replicating core android functionality, this is a bad sign.
     private final LinkedList<AwfulStackEntry> backStack = new LinkedList<>();
 	private boolean bypassBackStack = false;
+
+	private boolean zoomEnabled = false;
 
     private String mTitle = null;
 	private String postJump = "";
@@ -470,20 +471,25 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
         getLoaderManager().destroyLoader(Constants.POST_LOADER_ID);
     }
 
-    // TODO: fix deprecated warnings
-    private synchronized void refreshSessionCookie(){
-        if(mThreadView != null){
-        	CookieSyncManager.createInstance(getActivity());
-        	CookieManager cookieMonster = CookieManager.getInstance();
-        	cookieMonster.removeAllCookie();
-        	cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_SESSIONID));
-        	cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_SESSIONHASH));
-        	cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_USERID));
-        	cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_PASSWORD));
-        	cookieMonster.setAcceptThirdPartyCookies(mThreadView, true);
-        	CookieSyncManager.getInstance().sync();
-        }
-    }
+	private synchronized void refreshSessionCookie(){
+		if(mThreadView != null){
+			CookieManager cookieMonster = CookieManager.getInstance();
+			cookieMonster.removeAllCookies(null /* status not interesting/actionable */);
+			cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_SESSIONID));
+			cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_SESSIONHASH));
+			cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_USERID));
+			cookieMonster.setCookie(Constants.COOKIE_DOMAIN, CookieController.getCookieString(Constants.COOKIE_NAME_PASSWORD));
+
+			// Add the captcha cookie if it is present.
+			final String captchaCookie = CookieController.getCookieString(Constants.COOKIE_NAME_CAPTCHA);
+			if (!captchaCookie.isEmpty()) {
+				cookieMonster.setCookie(Constants.COOKIE_DOMAIN_CAPTCHA, captchaCookie);
+			}
+
+			cookieMonster.setAcceptThirdPartyCookies(mThreadView, true);
+			cookieMonster.flush();
+		}
+	}
  
     
     @Override
@@ -533,6 +539,10 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 		MenuItem yospos = menu.findItem(R.id.yospos);
 		if(yospos != null){
 			yospos.setVisible(mParentForumId == Constants.FORUM_ID_YOSPOS);
+		}
+		FontManager fm = FontManager.getInstance();
+		for (int i = 0; i < menu.size(); i++) {
+			fm.setMenuItemFont(menu.getItem(i));
 		}
     }
     
@@ -836,6 +846,7 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 
 				@Override
 				public void failure(VolleyError error) {
+					CaptchaActivity.handleCaptchaChallenge(activity, error);
 					Timber.w("Failed to sync thread! Error: %s", error.getMessage());
 					refreshInfo();
 					refreshPosts();
@@ -1208,6 +1219,18 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 		}
 
 		@JavascriptInterface
+		public void setZoomEnabled(boolean zoomOn) {
+			zoomEnabled = zoomOn;
+			if (zoomOn) {
+				haltSwipe();
+				getSwipyLayout().setEnabled(false);
+			} else {
+				resumeSwipe();
+				getSwipyLayout().setEnabled(!getPrefs().disablePullNext);
+			}
+		}
+
+		@JavascriptInterface
 		public void popupText(String text) {
 			Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
 		}
@@ -1252,11 +1275,18 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 			isGif = StringUtils.contains(lastSegment, ".gif")
 					&& !StringUtils.contains(lastSegment, ".gifv");
 		}
+		String linkUrl = url;
+		Matcher youtube = Pattern.compile("youtube\\.com/watch\\?v=([a-zA-Z0-9-_]+).*").matcher(linkUrl);
+		if (youtube.find()) {
+			linkUrl = path.getScheme() + "://" + path.getAuthority() + path.getPath() + "?v="+youtube.group(1);
+		} else if(StringUtils.contains(path.getHost(), "twitter.com")) {
+			linkUrl = path.getScheme() + "://" + path.getAuthority() + path.getPath();
+		}
 
-		UrlContextMenu linkActions = UrlContextMenu.newInstance(url, isImage, isGif, isGif ? "Getting file size" : null);
+		UrlContextMenu linkActions = UrlContextMenu.newInstance(linkUrl, isImage, isGif, isGif ? "Getting file size" : null);
 
 		if (isGif || !AwfulPreferences.getInstance().canLoadImages()) {
-			queueRequest(new ImageSizeRequest(url, result -> {
+			queueRequest(new ImageSizeRequest(linkUrl, result -> {
 				if (linkActions == null) {
 					return;
 				}
@@ -1275,7 +1305,7 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 	}
 
 	public void enqueueDownload(Uri link) {
-		if(AwfulUtils.isMarshmallow()){
+		if(AwfulUtils.isMarshmallow23() && !AwfulUtils.isTiramisu33()){
 			int permissionCheck = ContextCompat.checkSelfPermission(this.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
 			if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
 				downloadLink = link;
@@ -1315,13 +1345,10 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 					.setSubtitle("None of your apps want to open this " + intentUri.getScheme() + ":\\\\ link. Try installing an app that is less picky")
 					.show();
 		}
-
 	}
 
 	public void displayImage(String url){
-		Intent intent = BasicActivity.Companion.intentFor(ImageViewFragment.class, getActivity(), "");
-		intent.putExtra(ImageViewFragment.EXTRA_IMAGE_URL, url);
-		startActivity(intent);
+		mThreadView.runJavascript(String.format("showImageZoom('%s')", url));
 	}
 	
 	@Override
@@ -1746,6 +1773,10 @@ public class ThreadDisplayFragment extends AwfulFragment implements NavigationEv
 	
 	@Override
 	public boolean onBackPressed() {
+		if(zoomEnabled) {
+			mThreadView.runJavascript("exitImageZoom()");
+			return true;
+		}
 		if(backStackCount() > 0){
 			popThread();
 			return true;

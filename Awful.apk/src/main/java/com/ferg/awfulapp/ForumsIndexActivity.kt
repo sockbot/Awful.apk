@@ -275,7 +275,9 @@ class ForumsIndexActivity :
     }
 
     fun allowSwipe() {
-        runOnUiThread { forumsPager.setSwipeEnabled(true) }
+        if(!mPrefs.lockScrolling) {
+            runOnUiThread { forumsPager.setSwipeEnabled(true) }
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

@@ -135,6 +135,8 @@ public class MessageFragment extends AwfulFragment implements OnClickListener {
         }else{
             syncPM();
         }
+
+		getAwfulActivity().setPreferredFont(result);
         return result;
     }
 
@@ -166,7 +168,7 @@ public class MessageFragment extends AwfulFragment implements OnClickListener {
             	newMessage();
             	return true;
             case R.id.settings:
-            	getAwfulActivity().navigate(NavigationEvent.Settings.INSTANCE);
+            	getAwfulActivity().navigate(new NavigationEvent.Settings());
             	return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -224,7 +226,8 @@ public class MessageFragment extends AwfulFragment implements OnClickListener {
                         (dialog, button) -> {
                             if (mDialog == null && getActivity() != null) {
                                 mDialog = ProgressDialog.show(getActivity(), "Sending", "Hopefully it didn't suck...", true, true);
-                            }
+								getAwfulActivity().setPreferredFont(mDialog.findViewById(android.R.id.title));
+							}
                             saveReply();
                             sendPM();
                         })
@@ -399,6 +402,7 @@ public class MessageFragment extends AwfulFragment implements OnClickListener {
         		}else{
         			mSubject.setText(title);
         		}
+				getAwfulActivity().setPreferredFont(mSubject);
         		String author = aData.getString(aData.getColumnIndex(AwfulMessage.AUTHOR));
 				mUsername.setText("Sender: " + author);
         		String recip = aData.getString(aData.getColumnIndex(AwfulMessage.RECIPIENT));
@@ -407,11 +411,13 @@ public class MessageFragment extends AwfulFragment implements OnClickListener {
         		}else{
         			mRecipient.setText(author);
         		}
+
         	}else{
         		if(recipient != null){
         			mRecipient.setText(recipient);
         		}
         	}
+			getAwfulActivity().setPreferredFont(mRecipient);
 		}
         
         @Override

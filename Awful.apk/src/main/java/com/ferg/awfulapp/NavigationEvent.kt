@@ -48,7 +48,11 @@ sealed class NavigationEvent(private val extraTypeId: String) {
 
     object ForumIndex : NavigationEvent(TYPE_FORUM_INDEX)
 
-    object Settings : NavigationEvent(TYPE_SETTINGS) {
+    data class  Settings(val page: String? = null) : NavigationEvent(TYPE_SETTINGS) {
+
+        override val addDataToIntent: Intent.() -> Unit = {
+            putExtra(Constants.SETTINGS_PAGE, page)
+        }
 
         override fun activityIntent(context: Context) = context.intentFor(SettingsActivity::class.java)
     }
@@ -146,16 +150,19 @@ sealed class NavigationEvent(private val extraTypeId: String) {
 
         // the identifiers for each navigation type, added to and read from the app's intents, and the key used to store them
 
+        /** This is baked into shortcuts.xml, if you change the value here, change the value there */
         private const val EVENT_EXTRA_KEY = "navigation event"
         private const val TYPE_RE_AUTHENTICATE = "nav_re-auth"
         private const val TYPE_MAIN_ACTIVITY = "nav_main_activity"
         /** This one gets baked into the bookmarks widget when it's created, so if you change the value they'll have to be remade */
+        /** This is baked into shortcuts.xml, if you change the value here, change the value there */
         private const val TYPE_BOOKMARKS = "nav_bookmarks"
         private const val TYPE_FORUM_INDEX = "nav_forum_index"
         private const val TYPE_THREAD = "nav_thread"
         private const val TYPE_FORUM = "nav_forum"
         private const val TYPE_URL = "nav_url"
         private const val TYPE_SETTINGS = "nav_settings"
+        private const val TYPE_ACCOUNT = "nav_account"
         private const val TYPE_SEARCH_FORUMS = "nav_search_forums"
         private const val TYPE_SHOW_PRIVATE_MESSAGES = "nav_show_private_messages"
         private const val TYPE_COMPOSE_PRIVATE_MESSAGE = "nav_compose_private_message"
@@ -175,7 +182,9 @@ sealed class NavigationEvent(private val extraTypeId: String) {
             //TODO: handle behaviour for missing data, e.g. can't navigate to a thread with no thread ID
             // TODO: might be better to default to null? And let the caller decide what to do when parsing fails - can use the elvis ?: to supply a default event
                 TYPE_RE_AUTHENTICATE -> NavigationEvent.ReAuthenticate
-                TYPE_SETTINGS -> Settings
+                TYPE_SETTINGS -> Settings(
+                        page = getStringExtra(Constants.SETTINGS_PAGE)
+                )
                 TYPE_SEARCH_FORUMS -> SearchForums(
                         *getParcelableArrayListExtra<SearchFilter>(KEY_SEARCH_FILTERS)!!.toTypedArray()
                 )

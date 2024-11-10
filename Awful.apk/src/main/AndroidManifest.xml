@@ -7,21 +7,22 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.ferg.awfulapp"
-    android:versionCode="30816"
-    android:versionName="3.8.16"
+    android:versionCode="30909"
+    android:versionName="3.9.9"
       android:installLocation="auto">
     <supports-screens
         android:smallScreens="true"
-        android:normalScreens="true" 
-        android:largeScreens="true" 
-        android:anyDensity="true" 
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:anyDensity="true"
         />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <application 
+    <application
 		android:label="@string/app_name"
 		android:name="com.ferg.awfulapp.AwfulApplication"
         android:allowBackup="true"
@@ -73,6 +74,8 @@
 				<data android:pathPrefix="/bookmarkthreads.php"/>
 				<data android:pathPrefix="/showthread.php"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
         </activity-alias>
         <activity-alias android:label="@string/app_name"
                         android:icon="@mipmap/ic_launcher_dog"
@@ -99,6 +102,8 @@
                 <data android:pathPrefix="/bookmarkthreads.php"/>
                 <data android:pathPrefix="/showthread.php"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts"/>
         </activity-alias>
 
         <activity-alias android:label="@string/app_name"
@@ -126,6 +131,8 @@
                 <data android:pathPrefix="/bookmarkthreads.php"/>
                 <data android:pathPrefix="/showthread.php"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts"/>
         </activity-alias>
 
         <activity-alias android:label="@string/app_name"
@@ -153,6 +160,8 @@
                 <data android:pathPrefix="/bookmarkthreads.php"/>
                 <data android:pathPrefix="/showthread.php"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts"/>
         </activity-alias>
 
         <activity-alias android:label="@string/app_name"
@@ -180,6 +189,8 @@
                 <data android:pathPrefix="/bookmarkthreads.php"/>
                 <data android:pathPrefix="/showthread.php"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts"/>
         </activity-alias>
 
         <activity-alias android:label="@string/app_name"
@@ -207,6 +218,8 @@
                 <data android:pathPrefix="/bookmarkthreads.php"/>
                 <data android:pathPrefix="/showthread.php"/>
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts"/>
         </activity-alias>
         <!--
         This handles share intents, and is meant to run invisibly and separately in its own task (singleInstance)
@@ -228,7 +241,22 @@
             android:label="@string/settings_activity_title"
             android:configChanges="keyboardHidden" />
         <activity
+            android:name="com.ferg.awfulapp.AwfulImgurAuthActivity"
+            android:exported="true">
+            <intent-filter>
+                <action   android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="awful" android:host="imgur_oauth_callback" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name="com.ferg.awfulapp.PostReplyActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            />
+        <activity
+            android:name="com.ferg.awfulapp.PostThreadActivity"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|keyboardHidden|screenSize"
             />
@@ -240,15 +268,23 @@
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|keyboardHidden|screenSize"
             />
-        <activity 
+
+        <activity android:name="com.ferg.awfulapp.CaptchaActivity"
+            android:theme="@style/Theme.AppCompat.Light" />
+
+        <!-- Legacy activity for API 24 and below, to create bookmarks shortcut.
+             Isn't enabled until first launch on appropriate device. -->
+        <activity
             android:name="com.ferg.awfulapp.UserCPShortcutActivity"
             android:label="@string/usercp"
+            android:enabled="@bool/legacy_shortcut_creation"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <activity android:name="com.ferg.awfulapp.MessageDisplayActivity"
                   android:configChanges="orientation|keyboardHidden|screenSize" />
         <activity android:name="com.ferg.awfulapp.PrivateMessageActivity"

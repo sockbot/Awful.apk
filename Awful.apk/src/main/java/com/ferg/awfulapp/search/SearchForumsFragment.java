@@ -83,6 +83,8 @@ public class SearchForumsFragment extends AwfulDialogFragment {
 			public SearchHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 				View view = LayoutInflater.from(parent.getContext())
 						.inflate(R.layout.search_forum_item, parent, false);
+
+				getAwfulActivity().setPreferredFont(view);
 				return new SearchHolder(view);
 			}
 
@@ -120,6 +122,7 @@ public class SearchForumsFragment extends AwfulDialogFragment {
                         self.notifyDataSetChanged();
                     }
                 });
+				getAwfulActivity().setPreferredFont(holder.itemView);
 			}
 
 			@Override

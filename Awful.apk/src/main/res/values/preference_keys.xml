@@ -5,6 +5,10 @@
     <string name="pref_key_user_title">user_title</string>
     <string name="pref_key_theme">theme</string>
     <string name="pref_key_layout">layouts</string>
+    <string name="pref_key_imgur_account">imgur_account</string>
+    <string name="pref_key_imgur_account_token">imgur_account_token</string>
+    <string name="pref_key_imgur_refresh_token">imgur_refresh_token</string>
+    <string name="pref_key_imgur_token_expires">imgur_token_expires</string>
     <string name="pref_key_imgur_thumbnails">imgur_thumbnails</string>
     <string name="pref_key_preferred_font">preferred_font</string>
     <string name="pref_key_ignore_formkey">ignore_formkey</string>
@@ -69,6 +73,7 @@
     <string name="pref_key_marked_users">marked_users</string>
     <string name="pref_key_favourite_forums">favourite_forums</string>
     <string name="pref_key_recent_emotes">recent_emotes</string>
+    <string name="pref_key_post_warning_accepted">post_warning_accepted</string>
 
     <string name="pref_key_forum_index_show_subtitles">forum_index_show_subtitles</string>
     <string name="pref_key_forum_index_show_section_headers">forum_index_show_section_headers</string>
@@ -77,6 +82,7 @@
 
     <!--keys for preferences that don't store a value (i.e. settings menu items that act as buttons)-->
     <string name="pref_key_account_features_menu_item">account features</string>
+    <string name="pref_key_account_imgur_menu_item">imgur account</string>
     <string name="pref_key_about_menu_item">about</string>
     <string name="pref_key_changelog_menu_item">changelog</string>
     <string name="pref_key_open_thread_menu_item">open_thread</string>

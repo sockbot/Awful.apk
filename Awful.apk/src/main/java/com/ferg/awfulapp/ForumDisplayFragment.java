@@ -36,12 +36,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +56,7 @@ import com.android.volley.VolleyError;
 import com.ferg.awfulapp.constants.Constants;
 import com.ferg.awfulapp.network.NetworkUtils;
 import com.ferg.awfulapp.preferences.AwfulPreferences;
+import com.ferg.awfulapp.preferences.Keys;
 import com.ferg.awfulapp.provider.AwfulProvider;
 import com.ferg.awfulapp.provider.ColorProvider;
 import com.ferg.awfulapp.provider.DatabaseHelper;
@@ -157,6 +161,7 @@ public class ForumDisplayFragment extends AwfulFragment implements SwipyRefreshL
 
 		refreshProbationBar();
 
+        getAwfulActivity().setPreferredFont(result);
         return result;
     }
 
@@ -239,6 +244,42 @@ public class ForumDisplayFragment extends AwfulFragment implements SwipyRefreshL
         // TODO: cancel network reqs?
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.forum_display_fragment, menu);
+
+        MenuItem postThread = menu.findItem(R.id.post_thread);
+        postThread.setVisible(getForumId() != Constants.USERCP_ID);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.post_thread:
+                displayPostThreadDialog();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void displayPostThreadDialog() {
+        if(AwfulPreferences.getInstance().postWarningAccepted) {
+            displayPostThreadDialog(getForumId());
+            return;
+        }
+            new AlertDialog.Builder(getAwfulActivity())
+                    .setIcon(R.drawable.ic_gavel_dark_24dp)
+                    .setTitle("Warning")
+                    .setMessage(R.string.post_warning)
+                    .setPositiveButton("I accept", (dialog, which) -> {
+                        displayPostThreadDialog(getForumId());
+                        AwfulPreferences.getInstance().setPreference(Keys.POST_WARNING_ACCEPTED, true);
+                    })
+                    .setNegativeButton("Nope", (dialog, which) -> dialog.dismiss())
+                    .setCancelable(false)
+                    .show();
+
+    }
 
     @Override
     public void onCreateContextMenu(ContextMenu aMenu, View aView, ContextMenuInfo aMenuInfo) {
@@ -462,6 +503,7 @@ public class ForumDisplayFragment extends AwfulFragment implements SwipyRefreshL
 
                         @Override
                         public void failure(VolleyError error) {
+                            CaptchaActivity.handleCaptchaChallenge(getActivity(), error);
                             Timber.w("Failed to sync thread list!");
                             refreshInfo();
                             lastRefresh = System.currentTimeMillis();

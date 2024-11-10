@@ -73,8 +73,14 @@ abstract class AwfulActivity : AppCompatActivity(), AwfulPreferences.AwfulPrefer
                 if (ignoreFormkey == null || userAvatarUrl == null) RefreshUserProfileRequest(this@AwfulActivity).sendBlind()
                 if (ignoreFormkey == null) FeatureRequest(this@AwfulActivity).sendBlind()
             }
-        // TODO: this interferes with the code in AwfulFragment#reAuthenticate - i.e. it forces "return to this activity" behaviour, but fragments may want to return to the main activity.
-        // And the activity isn't always the authority, e.g. using BasicActivity which is a plain container where all the specific behaviour is handled by its fragment. It's awkward
+
+            // When a captcha is being handled, the login screen should be suppressed. Solving
+            // captchas is required for logging in, so overriding the captcha view makes the app
+            // unusuable otherwise.
+            CaptchaActivity.isCaptchaBeingHandled() -> { /* do nothing */ }
+
+            // TODO: this interferes with the code in AwfulFragment#reAuthenticate - i.e. it forces "return to this activity" behaviour, but fragments may want to return to the main activity.
+            // And the activity isn't always the authority, e.g. using BasicActivity which is a plain container where all the specific behaviour is handled by its fragment. It's awkward
             this !is AwfulLoginActivity -> showLogIn(returnToMainActivity = false)
         }
     }
@@ -244,11 +250,25 @@ abstract class AwfulActivity : AppCompatActivity(), AwfulPreferences.AwfulPrefer
     fun showPostComposer(threadId: Int, postType: Int, sourcePostId: Int) {
         // TODO: this should probably all be refactored into types like the NavigationEvents (maybe even rolled in with them) - discrete Posting events with the specific associated data for each
         startActivityForResult(
-                Intent(this, PostReplyActivity::class.java)
-                        .putExtra(Constants.REPLY_THREAD_ID, threadId)
-                        .putExtra(Constants.EDITING, postType)
-                        .putExtra(Constants.REPLY_POST_ID, sourcePostId),
-                PostReplyFragment.REQUEST_POST
+            Intent(this, PostReplyActivity::class.java)
+                .putExtra(Constants.REPLY_THREAD_ID, threadId)
+                .putExtra(Constants.EDITING, postType)
+                .putExtra(Constants.REPLY_POST_ID, sourcePostId),
+            PostReplyFragment.REQUEST_POST
+        )
+    }
+
+    /**
+     * Display the thread composer.
+     *
+     * @param forumId the ID of the forum the thread is in
+     */
+    fun showThreadComposer(forumId: Int) {
+        // TODO: this should probably all be refactored into types like the NavigationEvents (maybe even rolled in with them) - discrete Posting events with the specific associated data for each
+        startActivityForResult(
+            Intent(this, PostThreadActivity::class.java)
+                .putExtra(Constants.POST_FORUM_ID, forumId),
+            PostThreadFragment.REQUEST_THREAD
         )
     }
 

@@ -5,8 +5,8 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.preference.ListPreference;
-import android.preference.Preference;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -62,7 +62,7 @@ public class ThemeSettings extends SettingsFragment {
         findPrefById(R.string.pref_key_launcher_icon).setOnPreferenceChangeListener(new IconListener());
         Activity activity = getActivity();
         // TODO: 25/04/2017 a separate permissions class would probably be good, keep all this garbage in one place
-        if (AwfulUtils.isMarshmallow()) {
+        if (AwfulUtils.isMarshmallow23()) {
             int permissionCheck = ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE);
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {

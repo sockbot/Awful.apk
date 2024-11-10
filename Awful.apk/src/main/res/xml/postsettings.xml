@@ -1,52 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
+        app:iconSpaceReserved="false"
         android:defaultValue="16"
         android:key="@string/pref_key_post_font_size_sp"
         android:title="@string/default_post_font_size"/>
     <Preference
+        app:iconSpaceReserved="false"
         android:defaultValue="13"
         android:key="@string/pref_key_post_fixed_font_size_sp"
         android:title="@string/default_post_fixed_font_size"/>
     <Preference
+        app:iconSpaceReserved="false"
         android:defaultValue="40"
         android:key="@string/pref_key_post_per_page"
         android:title="@string/setting_posts_per_page"/>
 
     <PreferenceScreen
+        app:iconSpaceReserved="false"
         android:fragment="com.ferg.awfulapp.preferences.fragments.PostHighlightingSettings"
         android:key="@string/pref_key_highlighting_menu_item"
         android:title="@string/highlighting_settings_title"/>
 
     <PreferenceScreen
+        app:iconSpaceReserved="false"
         android:fragment="com.ferg.awfulapp.preferences.fragments.PostEmbeddingSettings"
         android:key="@string/pref_key_embedding_menu_item"
         android:title="@string/embedding_settings_title"
         />
 
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_hide_old_posts"
         android:summary="@string/hide_old_posts_summary"
         android:title="@string/hide_old_posts"/>
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="false"
         android:key="@string/pref_key_hide_ignored_posts"
         android:summary="@string/hide_ignored_posts_summary"
         android:title="@string/hide_ignored_posts"/>
 
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="false"
         android:key="@string/pref_key_show_all_spoilers"
         android:summary="@string/show_spoilers_summary"
         android:title="@string/show_spoilers"/>
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="false"
         android:key="@string/pref_key_hide_signatures"
         android:summary="@string/hide_signatures_summary"
         android:title="@string/hide_signatures"/>
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="false"
         android:key="@string/pref_key_always_open_urls"
         android:summary="@string/always_open_urls_summary"

@@ -114,6 +114,7 @@ public class PrivateMessageListFragment extends AwfulFragment implements SwipeRe
         mFAB.setOnClickListener(onButtonClick);
         mFAB.setVisibility((getPrefs().noFAB ? View.GONE : View.VISIBLE));
 
+        getAwfulActivity().setPreferredFont(result);
         return result;
     }
 
@@ -219,7 +220,7 @@ public class PrivateMessageListFragment extends AwfulFragment implements SwipeRe
         	syncPMs();
         	break;
         case R.id.settings:
-            getAwfulActivity().navigate(NavigationEvent.Settings.INSTANCE);
+            getAwfulActivity().navigate(new NavigationEvent.Settings());
         	break;
             default:
                 return super.onOptionsItemSelected(item);

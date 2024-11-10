@@ -14,13 +14,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.ferg.awfulapp.AwfulDialogFragment;
 import com.ferg.awfulapp.R;
+import com.ferg.awfulapp.databinding.ActionItemBinding;
 import com.ferg.awfulapp.provider.ColorProvider;
 
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 
 /**
  * Created by baka kaba on 22/05/2017.
@@ -32,7 +32,7 @@ import butterknife.ButterKnife;
  * the menu items as an enum, add whichever items you need, and switch on the enum cases to handle
  * the user's selection. Just pass the enum as the type parameter for the class.
  */
-public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragment {
+public abstract class BasePopupMenu<T extends AwfulAction> extends AwfulDialogFragment {
 
     /**
      * Can be used to set a callback that is called when an action is clicked.
@@ -72,7 +72,6 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View result = inflater.inflate(layoutResId, container, false);
-        ButterKnife.bind(this, result);
 
         TextView actionTitle = result.findViewById(R.id.actionTitle);
         actionTitle.setMovementMethod(new ScrollingMovementMethod());
@@ -83,6 +82,7 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
         actionsView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         getDialog().setCanceledOnTouchOutside(true);
+        getAwfulActivity().setPreferredFont(result);
         return result;
     }
 
@@ -107,12 +107,6 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
     abstract List<T> generateMenuItems();
 
     /**
-     * The title to display on the dialog.
-     */
-    @NonNull
-    abstract String getTitle();
-
-    /**
      * Called when the user selects one of your menu items.
      *
      * The dialog is dismissed after this method is called - don't dismiss it yourself!
@@ -135,14 +129,11 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
 
 
     class ActionHolder extends RecyclerView.ViewHolder {
-        @BindView(R.id.actionTag)
-        ImageView actionTag;
-        @BindView(R.id.actionTitle)
-        TextView actionText;
 
+        ActionItemBinding binding;
         ActionHolder(View view) {
             super(view);
-            ButterKnife.bind(this, view);
+            binding = ActionItemBinding.bind(view);
         }
     }
 
@@ -152,15 +143,16 @@ public abstract class BasePopupMenu<T extends AwfulAction> extends DialogFragmen
         @Override
         public ActionHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.action_item, parent, false);
+            getAwfulActivity().setPreferredFont(view);
             return new ActionHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ActionHolder holder, final int position) {
             final T action = menuItems.get(position);
-            holder.actionText.setText(getMenuLabel(action));
-            holder.actionText.setTextColor(ColorProvider.PRIMARY_TEXT.getColor());
-            holder.actionTag.setImageResource(action.getIconId());
+            holder.binding.actionTitle.setText(getMenuLabel(action));
+            holder.binding.actionTitle.setTextColor(ColorProvider.PRIMARY_TEXT.getColor());
+            holder.binding.actionTag.setImageResource(action.getIconId());
             holder.itemView.setOnClickListener(v -> {
                 onActionClicked(action);
                 if (onActionClickedListener != null) {

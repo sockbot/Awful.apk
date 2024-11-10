@@ -10,6 +10,7 @@ import androidx.annotation.UiThread
 import com.android.volley.*
 import com.android.volley.toolbox.HttpHeaderParser
 import com.ferg.awfulapp.AwfulApplication
+import com.ferg.awfulapp.CaptchaActivity
 import com.ferg.awfulapp.R
 import com.ferg.awfulapp.constants.Constants.BASE_URL
 import com.ferg.awfulapp.constants.Constants.SITE_HTML_ENCODING
@@ -19,7 +20,6 @@ import com.ferg.awfulapp.preferences.AwfulPreferences
 import com.ferg.awfulapp.task.AwfulRequest.Parameters.GetParams
 import com.ferg.awfulapp.task.AwfulRequest.Parameters.PostParams
 import com.ferg.awfulapp.util.AwfulError
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.apache.http.HttpEntity
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.mime.MultipartEntityBuilder
@@ -258,14 +258,6 @@ abstract class AwfulRequest<T>(protected val context: Context, private val baseU
                 return Response.success(result, HttpHeaderParser.parseCacheHeaders(response))
             } catch (ae: AwfulError) {
                 return Response.error(ae)
-            } catch (e: OutOfMemoryError) {
-                if (AwfulApplication.crashlyticsEnabled()) {
-                    val crashlytics: FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
-
-                    crashlytics.setCustomKey("Response URL", url)
-                    crashlytics.setCustomKey("Response data size", response.data.size.toLong())
-                }
-                throw e
             } catch (e: Exception) {
                 // TODO: find out what else this is meant to be catching, because it's swallowing every exception
                 Timber.e(e, "Failed parse: $url")
@@ -284,7 +276,13 @@ abstract class AwfulRequest<T>(protected val context: Context, private val baseU
                         append("(null VolleyError)")
                     } else {
                         Timber.e(volleyError)
-                        append(cause?.message ?: "unknown cause")
+
+                        if (networkResponse?.headers?.get("cf-mitigated") == "challenge") {
+                            append("captcha requested")
+                        } else {
+                            append(cause?.message ?: "unknown cause")
+                        }
+
                         networkResponse?.let { append("\nStatus code: ${networkResponse.statusCode}") }
                     }
                     Timber.e(toString())
@@ -311,10 +309,10 @@ abstract class AwfulRequest<T>(protected val context: Context, private val baseU
 
         @Throws(AuthFailureError::class)
         override fun getHeaders(): Map<String, String> {
-            return mutableMapOf<String, String>().apply(CookieController::setCookieHeaders)
-                    .also { Timber.i("getHeaders: %s", this) }
+            return mutableMapOf<String, String>("User-Agent" to AwfulApplication.getAwfulUserAgent())
+                .apply(CookieController::setCookieHeaders)
+                .also { Timber.i("getHeaders: %s", this) };
         }
-
 
         @Throws(AuthFailureError::class)
         override fun getBody(): ByteArray {

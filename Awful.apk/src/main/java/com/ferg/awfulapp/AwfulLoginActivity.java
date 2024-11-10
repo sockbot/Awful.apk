@@ -33,11 +33,13 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -63,6 +65,8 @@ public class AwfulLoginActivity extends AwfulActivity {
     private Button mLogin;
     private EditText mUsername;
     private EditText mPassword;
+    private CheckBox mAccept;
+    private TextView mTerms;
 
     private ProgressDialog mDialog;
 
@@ -77,9 +81,14 @@ public class AwfulLoginActivity extends AwfulActivity {
         mLogin = (Button) findViewById(R.id.login);
         mUsername = (EditText) findViewById(R.id.username);
         mPassword = (EditText) findViewById(R.id.password);
+        mAccept = (CheckBox) findViewById(R.id.login_accept);
+        mTerms = (TextView) findViewById(R.id.login_terms);
         mPassword.setOnEditorActionListener(new OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (!mAccept.isChecked()) {
+                    return false;
+                }
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     loginClick();
                 }
@@ -99,6 +108,15 @@ public class AwfulLoginActivity extends AwfulActivity {
             @Override
             public void onClick(View v) {
                 ((AnimationDrawable) image.getDrawable()).start();
+            }
+        });
+
+        mTerms.setMovementMethod(LinkMovementMethod.getInstance());
+
+        mAccept.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mLogin.setEnabled(mAccept.isChecked());
             }
         });
     }
@@ -145,6 +163,7 @@ public class AwfulLoginActivity extends AwfulActivity {
         final String password = NetworkUtils.encodeHtml(mPassword.getText().toString());
 
         mDialog = ProgressDialog.show(AwfulLoginActivity.this, "Logging In", "Hold on...", true);
+        setPreferredFont(mDialog.findViewById(android.R.id.title));
         final AwfulLoginActivity self = this;
         NetworkUtils.queueRequest(new LoginRequest(this, username, password).build(null, new AwfulRequest.AwfulResultCallback<Boolean>() {
             @Override
@@ -154,6 +173,8 @@ public class AwfulLoginActivity extends AwfulActivity {
 
             @Override
             public void failure(VolleyError error) {
+                CaptchaActivity.handleCaptchaChallenge(self, error);
+
                 // Volley sometimes generates NetworkErrors with no response set, or wraps them
                 NetworkResponse response = error.networkResponse;
                 if (response == null) {
@@ -164,12 +185,12 @@ public class AwfulLoginActivity extends AwfulActivity {
                 }
                 if (response != null && response.statusCode == HttpStatus.SC_MOVED_TEMPORARILY) {
                     Boolean result = CookieController.saveLoginCookies(getApplicationContext());
-                    if(result){
+                    if (result) {
                         // TODO: this should probably be handled by firing a ProfileRequest and getting the username from there, maybe through SyncManager
                         AwfulPreferences prefs = AwfulPreferences.getInstance(getApplicationContext());
                         prefs.setPreference(Keys.USERNAME, username);
                         onLoginSuccess();
-                    }else{
+                    } else {
                         onLoginFailed();
                     }
                 } else {
@@ -183,7 +204,8 @@ public class AwfulLoginActivity extends AwfulActivity {
                 setResult(Activity.RESULT_OK);
                 self.finish();
             }
-            private  void onLoginFailed(){
+
+            private void onLoginFailed() {
                 mDialog.dismiss();
                 Toast.makeText(AwfulLoginActivity.this, R.string.login_failed, Toast.LENGTH_SHORT).show();
                 setResult(Activity.RESULT_CANCELED);

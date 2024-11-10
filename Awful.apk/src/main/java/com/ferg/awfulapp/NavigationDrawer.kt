@@ -11,6 +11,7 @@ import androidx.appcompat.widget.Toolbar
 import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.forEach
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.ImageLoader
 import com.ferg.awfulapp.ForumDisplayFragment.NULL_FORUM_ID
@@ -84,6 +85,10 @@ class NavigationDrawer(val activity: AwfulActivity, toolbar: Toolbar, val prefs:
         prefs.registerCallback { _, _ -> refresh() }
         AnnouncementsManager.getInstance().registerListener { _, _, _, _ -> refresh() }
         refresh()
+        activity.setPreferredFont(navigationMenu)
+        navigationMenu.menu.forEach {
+            FontManager.getInstance().setMenuItemFont(it)
+        }
     }
 
     private fun menuItem(resId: Int) = navigationMenu.menu.findItem(resId)
@@ -109,7 +114,7 @@ class NavigationDrawer(val activity: AwfulActivity, toolbar: Toolbar, val prefs:
                 R.id.sidebar_forum -> navigate(NavigationEvent.Forum(id = currentForumId))
                 R.id.sidebar_thread -> navigate(NavigationEvent.Thread(id = currentThreadId))
                 R.id.sidebar_bookmarks -> navigate(NavigationEvent.Bookmarks)
-                R.id.sidebar_settings -> navigate(NavigationEvent.Settings)
+                R.id.sidebar_settings -> navigate(NavigationEvent.Settings())
                 R.id.sidebar_search -> navigate(NavigationEvent.SearchForums())
                 R.id.sidebar_pm -> navigate(NavigationEvent.ShowPrivateMessages())
                 R.id.sidebar_announcements -> navigate(NavigationEvent.Announcements)
@@ -151,6 +156,9 @@ class NavigationDrawer(val activity: AwfulActivity, toolbar: Toolbar, val prefs:
         val unread = AnnouncementsManager.getInstance().unreadCount
         announcementsItem.title = getString(R.string.announcements) +
                 if (unread == 0) "" else " ($unread)"
+
+        activity.setPreferredFont(navigationMenu)
+        FontManager.getInstance().setMenuItemFont(announcementsItem)
     }
 
     fun setCurrentForumAndThread(forumId: Int?, threadId: Int?) {
@@ -195,6 +203,7 @@ private class HierarchyTextUpdater(
     private val appContext = context.applicationContext
     private val forumMenuItem = WeakReference(forumItem)
     private val threadMenuItem = WeakReference(threadItem)
+    private val fm = FontManager.getInstance()
 
     override fun doInBackground(vararg params: Void?): Void? {
         threadName = StringProvider.getThreadName(appContext, threadId)
@@ -205,6 +214,8 @@ private class HierarchyTextUpdater(
     override fun onPostExecute(aVoid: Void?) {
         forumMenuItem.get()?.title = forumName ?: ""
         threadMenuItem.get()?.title = threadName ?: ""
+        fm.setMenuItemFont(forumMenuItem.get())
+        fm.setMenuItemFont(threadMenuItem.get())
     }
 
 }

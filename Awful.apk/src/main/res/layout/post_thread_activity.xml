@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/reply_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/background"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ToolBarStyle"
+        app:elevation="4dp"
+        app:popupTheme="?attr/awfulPopUpTheme"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <fragment
+            android:id="@+id/thread_icon_picker"
+            android:name="com.ferg.awfulapp.widget.ThreadIconPicker"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            tools:layout="@layout/icon_picker"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:counterEnabled="true"
+            app:counterMaxLength="75"
+            >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/thread_subject"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Thread title"
+                android:inputType="text|textAutoCorrect|textCapSentences"
+                android:maxLines="1"
+                android:maxLength="75"
+                android:textColor="@color/default_post_font"
+                android:textCursorDrawable="@null"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+        tools:ignore="ContentDescription"/>
+
+    <fragment
+        android:id="@+id/thread_fragment"
+        android:name="com.ferg.awfulapp.PostThreadFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginLeft="@dimen/material_screen_edge_margin"
+        android:layout_marginRight="@dimen/material_screen_edge_margin"
+        android:layout_weight="1"
+        tools:layout="@layout/message_composer"/>
+
+</LinearLayout>

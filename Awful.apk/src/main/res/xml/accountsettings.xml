@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <EditTextPreference
+        app:iconSpaceReserved="false"
         android:key="@string/pref_key_username"
         android:title="@string/username_pref"
         android:defaultValue="Username"
         />
     <Preference
+        app:iconSpaceReserved="false"
         android:key="@string/pref_key_account_features_menu_item"
         android:title="@string/features"
         android:summary="@string/features_summary"
         />
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:key="@string/pref_key_send_username_in_report"
         android:title="@string/send_username_in_report"
         android:summary="@string/send_username_in_report_summary"
         android:defaultValue="true"
+        />
+    <Preference
+        app:iconSpaceReserved="false"
+        android:key="@string/pref_key_account_imgur_menu_item"
+        android:title="@string/imgur_account_pref"
+        android:summary="@string/imgur_account_summary"
         />
 </PreferenceScreen>

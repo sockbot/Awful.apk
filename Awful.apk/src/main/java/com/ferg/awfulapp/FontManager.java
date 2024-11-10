@@ -4,11 +4,16 @@ import android.content.res.AssetManager;
 import android.graphics.Typeface;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import android.text.SpannableStringBuilder;
+import android.text.style.TypefaceSpan;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.ferg.awfulapp.preferences.AwfulPreferences;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -113,9 +118,11 @@ public class FontManager implements AwfulPreferences.AwfulPreferenceUpdate {
      *              {@link Typeface#ITALIC}, or {@link Typeface#BOLD_ITALIC},
      */
     public void setTypefaceToCurrentFont(View view, int flags) {
-        if (view instanceof TextView)
+        if (view instanceof TextView) {
             setTextViewTypefaceToCurrentFont((TextView) view, flags);
-        else if (view instanceof ViewGroup) {
+        } else if(view instanceof TextInputLayout){
+            setTextViewTypefaceToCurrentFont((TextInputLayout) view);
+        } else if (view instanceof ViewGroup) {
             ViewGroup viewGroup = (ViewGroup) view;
 
             for (int i = 0; i < viewGroup.getChildCount(); i++)
@@ -172,6 +179,26 @@ public class FontManager implements AwfulPreferences.AwfulPreferenceUpdate {
             textView.setTypeface(currentFont, textStyle);
         else
             Timber.w("Couldn't set typeface as currentFont is null");
+    }
+
+    /**
+     * Set a TextView's typeface to the current font.
+     *
+     * @param textLayout  TextView to set
+     */
+    private void setTextViewTypefaceToCurrentFont(TextInputLayout textLayout) {
+
+        if (currentFont != null)
+            textLayout.setTypeface(currentFont);
+        else
+            Timber.w("Couldn't set typeface as currentFont is null");
+    }
+
+    public void setMenuItemFont(MenuItem item) {
+        SpannableStringBuilder title = new SpannableStringBuilder(item.getTitle());
+        TypefaceSpan face = new TypefaceSpan(currentFont);
+        title.setSpan(face, 0, title.length(), 0);
+        item.setTitle(title);
     }
 
     /**

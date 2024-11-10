@@ -53,6 +53,7 @@ import java.util.regex.Pattern;
 
 import timber.log.Timber;
 
+@SuppressWarnings({"unchecked", "unsafe"})
 public class NetworkUtils {
     private static final String CHARSET = "windows-1252";
 
@@ -61,7 +62,7 @@ public class NetworkUtils {
 
     private static RequestQueue mNetworkQueue;
     private static LRUImageCache mImageCache;
-    private static ImageLoader mImageLoader;
+    private static AwfulImageLoader mImageLoader;
 
     /**
      * Initialise request handling and caching - call this early!
@@ -74,7 +75,7 @@ public class NetworkUtils {
         mNetworkQueue = Volley.newRequestQueue(context);
         // TODO: find out if this is even being used anywhere
         mImageCache = new LRUImageCache();
-        mImageLoader = new ImageLoader(mNetworkQueue, mImageCache);
+        mImageLoader = new AwfulImageLoader(mNetworkQueue, mImageCache);
 
         try {
             HttpResponseCache.install(new File(context.getCacheDir(), "httpcache"), 5242880);

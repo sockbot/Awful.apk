@@ -50,7 +50,6 @@ import com.ferg.awfulapp.thread.AwfulForum;
 import com.ferg.awfulapp.thread.AwfulMessage;
 import com.ferg.awfulapp.thread.AwfulPost;
 import com.ferg.awfulapp.thread.AwfulThread;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,6 +63,7 @@ import static com.ferg.awfulapp.provider.DatabaseHelper.TABLE_FORUM;
 import static com.ferg.awfulapp.provider.DatabaseHelper.TABLE_PM;
 import static com.ferg.awfulapp.provider.DatabaseHelper.TABLE_POSTS;
 import static com.ferg.awfulapp.provider.DatabaseHelper.TABLE_THREADS;
+import static com.ferg.awfulapp.provider.DatabaseHelper.TABLE_THREAD_DRAFTS;
 import static com.ferg.awfulapp.provider.DatabaseHelper.TABLE_UCP_THREADS;
 
 public class AwfulProvider extends ContentProvider {
@@ -92,8 +92,10 @@ public class AwfulProvider extends ContentProvider {
     private static final int URI_DRAFT_ID = 11;
     private static final int URI_EMOTE = 12;
     private static final int URI_EMOTE_ID = 13;
+    private static final int URI_THREAD_DRAFT = 14;
+    private static final int URI_THREAD_DRAFT_ID = 15;
     /** This just holds the Uri types that directly refer to tables, not IDs */
-	private static final Set<Integer> TABLE_URIS = new HashSet<>(Arrays.asList(URI_FORUM, URI_POST, URI_THREAD, URI_UCP_THREAD, URI_PM, URI_DRAFT, URI_EMOTE));
+	private static final Set<Integer> TABLE_URIS = new HashSet<>(Arrays.asList(URI_FORUM, URI_POST, URI_THREAD, URI_UCP_THREAD, URI_PM, URI_DRAFT, URI_EMOTE, URI_THREAD_DRAFT));
 
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
@@ -111,6 +113,8 @@ public class AwfulProvider extends ContentProvider {
         sUriMatcher.addURI(Constants.AUTHORITY, "draftreplies/#", URI_DRAFT_ID);
         sUriMatcher.addURI(Constants.AUTHORITY, "emote", URI_EMOTE);
         sUriMatcher.addURI(Constants.AUTHORITY, "emote/#", URI_EMOTE_ID);
+        sUriMatcher.addURI(Constants.AUTHORITY, "draftthreads", URI_THREAD_DRAFT);
+        sUriMatcher.addURI(Constants.AUTHORITY, "draftthreads/#", URI_THREAD_DRAFT_ID);
     }
 
 
@@ -262,6 +266,22 @@ public class AwfulProvider extends ContentProvider {
             AwfulMessage.EPOC_TIMESTAMP,
             DatabaseHelper.UPDATED_TIMESTAMP
     };
+
+    private static final HashMap<String, String> sDraftThreadProjectionMap = new HashMap<>();
+    static {
+        sDraftThreadProjectionMap.put(AwfulMessage.ID, AwfulMessage.ID);
+        sDraftThreadProjectionMap.put(AwfulPost.FORM_COOKIE, AwfulPost.FORM_COOKIE);
+        sDraftThreadProjectionMap.put(AwfulPost.FORM_KEY, AwfulPost.FORM_KEY);
+        sDraftThreadProjectionMap.put(AwfulMessage.POST_CONTENT, AwfulMessage.POST_CONTENT);
+        sDraftThreadProjectionMap.put(AwfulMessage.POST_SUBJECT, AwfulMessage.POST_SUBJECT);
+        sDraftThreadProjectionMap.put(AwfulMessage.POST_ICON_ID, AwfulMessage.POST_ICON_ID);
+        sDraftThreadProjectionMap.put(AwfulMessage.POST_ICON_URL, AwfulMessage.POST_ICON_URL);
+        sDraftThreadProjectionMap.put(AwfulMessage.REPLY_ATTACHMENT, AwfulMessage.REPLY_ATTACHMENT);
+        sDraftThreadProjectionMap.put(AwfulPost.FORM_BOOKMARK, AwfulPost.FORM_BOOKMARK);
+        sDraftThreadProjectionMap.put(AwfulMessage.EPOC_TIMESTAMP, AwfulMessage.EPOC_TIMESTAMP);
+        sDraftThreadProjectionMap.put(DatabaseHelper.UPDATED_TIMESTAMP, DatabaseHelper.UPDATED_TIMESTAMP);
+    }
+    public static final String[] DraftThreadProjection = arrayOfKeys(sDraftThreadProjectionMap);
 
     // Private messages
 	private static final HashMap<String, String> sPMReplyProjectionMap = new HashMap<>();
@@ -454,13 +474,7 @@ public class AwfulProvider extends ContentProvider {
         if (uriType == UriMatcher.NO_MATCH) {
             String msg = String.format("Unrecognised query Uri!\nUri: %s\nProjection: %s\nSelection: %s\nSelection args: %s\nSort order: %s",
                     aUri, Arrays.toString(aProjection), aSelection, Arrays.toString(aSelectionArgs), aSortOrder);
-            if (AwfulApplication.crashlyticsEnabled()) {
-                FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
-
-                crashlytics.log("WARN/" + TAG+ ": "+msg);
-            } else {
-                Log.w(TAG, msg);
-            }
+            Log.w(TAG, msg);
             return null;
         }
 
@@ -509,6 +523,12 @@ public class AwfulProvider extends ContentProvider {
                 builder.setProjectionMap(sDraftProjectionMap);
                 break;
 
+            case URI_THREAD_DRAFT_ID:
+                whereClause = AwfulMessage.ID;
+            case URI_THREAD_DRAFT:
+                builder.setProjectionMap(sDraftThreadProjectionMap);
+                break;
+
             case URI_EMOTE_ID:
                 whereClause = AwfulEmote.ID;
             case URI_EMOTE:
@@ -533,12 +553,7 @@ public class AwfulProvider extends ContentProvider {
             return result;
         } catch (Exception e) {
             String msg = String.format("aUri:\n%s\nQuery tables string:\n%s", aUri, builder.getTables());
-            if (AwfulApplication.crashlyticsEnabled()){
-                FirebaseCrashlytics crashlytics = FirebaseCrashlytics.getInstance();
-                crashlytics.log("WARN/" + TAG+ ": "+msg);
-            } else{
-                Log.w(TAG, msg, e);
-            }
+            Log.w(TAG, msg, e);
             throw e;
         }
     }
@@ -574,9 +589,12 @@ public class AwfulProvider extends ContentProvider {
 			case URI_PM_ID:
 			case URI_PM:
 				return TABLE_PM;
-			case URI_DRAFT_ID:
-			case URI_DRAFT:
-				return TABLE_DRAFTS;
+            case URI_DRAFT_ID:
+            case URI_DRAFT:
+                return TABLE_DRAFTS;
+            case URI_THREAD_DRAFT_ID:
+            case URI_THREAD_DRAFT:
+                return TABLE_THREAD_DRAFTS;
 			case URI_EMOTE_ID:
 			case URI_EMOTE:
 				return TABLE_EMOTES;

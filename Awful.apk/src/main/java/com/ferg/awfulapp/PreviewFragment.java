@@ -45,7 +45,7 @@ import com.ferg.awfulapp.webview.WebViewJsInterface;
 
 import java.util.HashMap;
 
-public class PreviewFragment extends DialogFragment {
+public class PreviewFragment extends AwfulDialogFragment {
 
     private AwfulWebView postPreView;
     private ProgressBar progressBar;
@@ -64,6 +64,7 @@ public class PreviewFragment extends DialogFragment {
 
         getDialog().setCanceledOnTouchOutside(true);
         postPreView.setContent(getBlankPage());
+        getAwfulActivity().setPreferredFont(dialogView);
 
         return dialogView;
     }
@@ -100,4 +101,8 @@ public class PreviewFragment extends DialogFragment {
         postPreView.setJavascriptHandler(jsInterface);
     }
 
+    @Override
+    public String getTitle() {
+        return "Preview";
+    }
 }
