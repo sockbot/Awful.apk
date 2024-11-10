@@ -1,29 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
+        app:iconSpaceReserved="false"
         android:summary="@string/post_highlighting_description"
         />
 
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_highlight_username"
         android:summary="@string/user_highlight_summary"
         android:title="@string/user_highlight"
         />
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_highlight_user_quote"
         android:summary="@string/user_quote_summary"
         android:title="@string/user_quote"
         />
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_highlight_self"
         android:title="@string/self_highlight"
         />
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_highlight_op"
         android:title="@string/op_highlight"

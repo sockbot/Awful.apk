@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.ferg.awfulapp.AwfulActivity;
+import com.ferg.awfulapp.FontManager;
 import com.ferg.awfulapp.NavigationEvent;
 import com.ferg.awfulapp.preferences.AwfulPreferences;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -67,6 +68,7 @@ public class MessageComposer extends Fragment implements EmotePickerListener {
         View result = inflater.inflate(R.layout.message_composer, container, true);
         messageBox = result.findViewById(R.id.message_edit_text);
         addBbCodeToSelectionMenu(messageBox);
+        ((AwfulActivity) getActivity()).setPreferredFont(result);
         return result;
     }
 
@@ -88,6 +90,10 @@ public class MessageComposer extends Fragment implements EmotePickerListener {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.message_composer, menu);
+        FontManager fm = FontManager.getInstance();
+        for (int i = 0; i < menu.size(); i++) {
+            fm.setMenuItemFont(menu.getItem(i));
+        }
     }
 
 

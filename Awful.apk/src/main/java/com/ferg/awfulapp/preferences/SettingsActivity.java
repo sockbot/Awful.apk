@@ -1,18 +1,15 @@
 package com.ferg.awfulapp.preferences;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
@@ -103,6 +100,7 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings);
         View leftPane = findViewById(R.id.root_fragment_container);
+        View mainPane = findViewById(R.id.main_fragment_container);
         if (leftPane != null && leftPane.getVisibility() == View.VISIBLE) {
             isDualPane = true;
         }
@@ -116,7 +114,7 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
             startFragment = new RootSettings();
         }
 
-        FragmentManager fm = getFragmentManager();
+        FragmentManager fm = getSupportFragmentManager();
         // if there's no previous fragment history being restored, initialise!
         // we need to start with the root fragment, so it's always under the backstack
         if (savedInstanceState == null) {
@@ -141,6 +139,8 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         updateTitleBar();
+        setPreferredFont(leftPane);
+        setPreferredFont(mainPane);
     }
 
 
@@ -151,7 +151,7 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
      */
     @Override
     public void onBackPressed() {
-        FragmentManager fm = getFragmentManager();
+        FragmentManager fm = getSupportFragmentManager();
         int backStackCount = fm.getBackStackEntryCount();
         // don't pop off the first entry in dual-pane mode, it will leave the second pane blank - just exit
         if (backStackCount == 0 || isDualPane && backStackCount == 1) {
@@ -207,7 +207,7 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
          */
 
         // if we're opening a submenu and there's already one open, wipe it from the back stack
-        FragmentManager fm = getFragmentManager();
+        FragmentManager fm = getSupportFragmentManager();
         if (addedFromRoot) {
             // when a root submenu is clicked, we need a new submenu backstack
             clearBackStack(fm);
@@ -239,7 +239,7 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
         if (actionBar == null) {
             return;
         }
-        FragmentManager fm = getFragmentManager();
+        FragmentManager fm = getSupportFragmentManager();
         // make sure fragment transactions are finished before we poke around in there
         fm.executePendingTransactions();
         // if there's a submenu fragment present, get the title from that
@@ -257,7 +257,7 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
     public void onPreferenceChange(AwfulPreferences preferences, String key) {
         // update the summaries on any loaded fragments
         for (String tag : new String[]{ROOT_FRAGMENT_TAG, SUBMENU_FRAGMENT_TAG}) {
-            SettingsFragment fragment = (SettingsFragment) getFragmentManager().findFragmentByTag(tag);
+            SettingsFragment fragment = (SettingsFragment) getSupportFragmentManager().findFragmentByTag(tag);
             if (fragment != null) {
                 fragment.setSummaries();
             }
@@ -299,35 +299,5 @@ public class SettingsActivity extends AwfulActivity implements AwfulPreferences.
         Uri settingsUri = data.getData();
         boolean success = (settingsUri != null && AwfulPreferences.getInstance(this).exportSettings(settingsUri));
         Toast.makeText(this, (success ? "Settings exported!" : "Failed to export"), Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    protected Dialog onCreateDialog(int dialogId) {
-        switch (dialogId) {
-            case DIALOG_ABOUT:
-                CharSequence app_version = getText(R.string.app_name);
-                try {
-                    app_version = app_version + " " +
-                            getPackageManager().getPackageInfo(getPackageName(), 0)
-                                    .versionName;
-                } catch (PackageManager.NameNotFoundException e) {
-                    // rather unlikely, just show app_name without version
-                }
-                // Build the text for the About dialog
-                Resources res = getResources();
-                String aboutText = getString(R.string.about_contributors_title) + "\n\n";
-                aboutText += StringUtils.join(res.getStringArray(R.array.about_contributors_array), '\n');
-                aboutText += "\n\n" + getString(R.string.about_libraries_title) + "\n\n";
-                aboutText += StringUtils.join(res.getStringArray(R.array.about_libraries_array), '\n');
-
-                return new AlertDialog.Builder(this)
-                        .setTitle(app_version)
-                        .setMessage(aboutText)
-                        .setNeutralButton(android.R.string.ok, (dialog, which) -> {
-                        })
-                        .create();
-            default:
-                return super.onCreateDialog(dialogId);
-        }
     }
 }

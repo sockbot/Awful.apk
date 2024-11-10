@@ -1,6 +1,6 @@
 package com.ferg.awfulapp.preferences.fragments;
 
-import android.preference.Preference;
+import androidx.preference.Preference;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 

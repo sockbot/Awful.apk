@@ -43,6 +43,7 @@ public class Constants {
     public static final String FUNCTION_USERCP          = BASE_URL + "/usercp.php";
     public static final String FUNCTION_FORUM           = BASE_URL + "/forumdisplay.php";
     public static final String FUNCTION_THREAD          = BASE_URL + "/showthread.php";
+    public static final String FUNCTION_POST_THREAD      = BASE_URL + "/newthread.php";
     public static final String FUNCTION_POST_REPLY      = BASE_URL + "/newreply.php";
     public static final String FUNCTION_EDIT_POST       = BASE_URL + "/editpost.php";
     public static final String FUNCTION_MEMBER          = BASE_URL + "/member.php";
@@ -177,16 +178,19 @@ public class Constants {
 	public static final int THREAD_INFO_LOADER_ID = 891;
 	public static final int POST_LOADER_ID = 892;
 	public static final int FORUM_INDEX_LOADER_ID = 893;
+    public static final int THREAD_DRAFT_LOADER_ID = 894;
 
 	public static final String ACTION_DOSEND = "dosend";
 	public static final String DESTINATION_TOUSER = "touser";
 	public static final String PARAM_TITLE = "title";
-	public static final String PARAM_MESSAGE = "message";
+    public static final String PARAM_MESSAGE = "message";
+    public static final String PARAM_SUBJECT = "subject";
 
 	public static final String EXTRA_BUNDLE = "extras";
 
     public static final String SUBMIT_REPLY = "Submit Reply";
     public static final String PREVIEW_REPLY = "Preview Reply";
+    public static final String PREVIEW_POST = "Preview Post";
 
 	public static final String YES = "yes";//heh
 
@@ -206,6 +210,8 @@ public class Constants {
     public static final String REPLY_POST_ID = "reply_post_id";
     public static final String REPLY_THREAD_ID = "reply_thread_id";
 
+    public static final String POST_FORUM_ID = "post_forum_id";
+
     public static final int AWFUL_THREAD_ID = 3571717;
     public static final int FORUM_ID_SHSC = 22;
     public static final int FORUM_ID_YOSPOS = 219;
@@ -221,6 +227,7 @@ public class Constants {
 
     public static final int AWFUL_PERMISSION_READ_EXTERNAL_STORAGE = 123;
     public static final int AWFUL_PERMISSION_WRITE_EXTERNAL_STORAGE = 124;
+    public static final int AWFUL_PERMISSION_READ_MEDIA_IMAGES = 125;
 
     public enum POST_ICON_REQUEST_TYPES {
         FORUM_POST, PM

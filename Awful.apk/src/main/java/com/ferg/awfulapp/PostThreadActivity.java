@@ -1,7 +1,7 @@
 /********************************************************************************
  * Copyright (c) 2011, Scott Ferguson
  * All rights reserved.
-
+ * <p>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  * * Neither the name of the software nor the
  * names of its contributors may be used to endorse or promote products
  * derived from this software without specific prior written permission.
-
+ * <p>
  * THIS SOFTWARE IS PROVIDED BY SCOTT FERGUSON ''AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -23,55 +23,60 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ *******************************************************************************/
 
-package com.ferg.awfulapp
+package com.ferg.awfulapp;
 
-import android.graphics.Bitmap
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
-import com.bumptech.glide.Glide
+import android.os.Bundle;
+import android.view.MenuItem;
 
+import com.ferg.awfulapp.databinding.PostThreadActivityBinding;
 
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.FragmentManager;
 
 
+public class PostThreadActivity extends AwfulActivity {
 
-/**
- * Loads and displays an image in a zoomable view.
- */
-class ImageViewFragment : AwfulFragment() {
 
-    private var imageUrl = "No image url"
+    Toolbar mToolbar;
+    PostThreadFragment threadFragment;
 
-    companion object {
-        const val EXTRA_IMAGE_URL = "image url"
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        PostThreadActivityBinding binding = PostThreadActivityBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        mToolbar = binding.toolbar;
+
+        setSupportActionBar(mToolbar);
+        setUpActionBar();
+
+        FragmentManager fm = getSupportFragmentManager();
+        threadFragment = (PostThreadFragment) fm.findFragmentById(R.id.thread_fragment);
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflateView(R.layout.image_view_fragment, container, inflater)
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
-    override fun onActivityCreated(aSavedState: Bundle?) {
-        super.onActivityCreated(aSavedState)
-        val mImageView = requireActivity().findViewById<View>(R.id.iv_photo) as ImageView
-        val imageUrl = requireActivity().intent.getStringExtra(EXTRA_IMAGE_URL);
-
-        Glide
-            .with(mImageView)
-            .load(imageUrl)
-            .into(mImageView);
-
-
-
-        setActionBarTitle(imageUrl!!)
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onLeaveActivity();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
-    override fun getTitle(): String = imageUrl
+    @Override
+    public void onBackPressed() {
+        onLeaveActivity();
+    }
+
+    private void onLeaveActivity() {
+        threadFragment.onNavigateBack();
+    }
 }

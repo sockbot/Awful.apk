@@ -46,18 +46,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.ferg.awfulapp.databinding.PostReplyActivityBinding;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.loader.app.LoaderManager;
-import androidx.core.content.ContextCompat;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
-import androidx.appcompat.app.AlertDialog;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
@@ -68,7 +56,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.VolleyError;
@@ -77,27 +65,33 @@ import com.ferg.awfulapp.network.NetworkUtils;
 import com.ferg.awfulapp.preferences.AwfulPreferences;
 import com.ferg.awfulapp.provider.AwfulProvider;
 import com.ferg.awfulapp.provider.ColorProvider;
-import com.ferg.awfulapp.reply.MessageComposer;
 import com.ferg.awfulapp.task.AwfulRequest;
-import com.ferg.awfulapp.task.EditRequest;
-import com.ferg.awfulapp.task.PreviewEditRequest;
-import com.ferg.awfulapp.task.PreviewPostRequest;
-import com.ferg.awfulapp.task.QuoteRequest;
-import com.ferg.awfulapp.task.ReplyRequest;
-import com.ferg.awfulapp.task.SendEditRequest;
-import com.ferg.awfulapp.task.SendPostRequest;
+import com.ferg.awfulapp.task.PreviewThreadRequest;
+import com.ferg.awfulapp.task.SendThreadRequest;
+import com.ferg.awfulapp.task.ThreadRequest;
+import com.ferg.awfulapp.thread.AwfulForum;
 import com.ferg.awfulapp.thread.AwfulMessage;
-import com.ferg.awfulapp.thread.AwfulPost;
 import com.ferg.awfulapp.thread.AwfulThread;
+import com.ferg.awfulapp.reply.MessageComposer;
 import com.ferg.awfulapp.util.AwfulUtils;
+import com.ferg.awfulapp.widget.ThreadIconPicker;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.apache.commons.lang3.StringUtils;
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
-import org.w3c.dom.Text;
 
 import java.io.File;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 import timber.log.Timber;
 
 import static com.ferg.awfulapp.constants.Constants.ATTACHMENT_MAX_BYTES;
@@ -105,29 +99,29 @@ import static com.ferg.awfulapp.constants.Constants.ATTACHMENT_MAX_HEIGHT;
 import static com.ferg.awfulapp.constants.Constants.ATTACHMENT_MAX_WIDTH;
 import static com.ferg.awfulapp.thread.AwfulMessage.REPLY_DISABLE_SMILIES;
 import static com.ferg.awfulapp.thread.AwfulMessage.REPLY_SIGNATURE;
-import static com.ferg.awfulapp.thread.AwfulMessage.TYPE_EDIT;
-import static com.ferg.awfulapp.thread.AwfulMessage.TYPE_NEW_REPLY;
-import static com.ferg.awfulapp.thread.AwfulMessage.TYPE_QUOTE;
 
-public class PostReplyFragment extends AwfulFragment {
+public class PostThreadFragment extends AwfulFragment {
 
-    public static final int REQUEST_POST = 5;
+    public static final int REQUEST_THREAD = 5;
     public static final int RESULT_POSTED = 6;
     public static final int RESULT_CANCELLED = 7;
-    public static final int RESULT_EDITED = 8;
     public static final int ADD_ATTACHMENT = 9;
-    private static final String TAG = "PostReplyFragment";
+    private static final String TAG = "PostThreadFragment";
 
     // UI components
     private MessageComposer messageComposer;
     @Nullable
     private ProgressDialog progressDialog;
 
+    private ThreadIconPicker threadIconPicker;
+
+    private EditText subject;
+
     // internal state
     @Nullable
     private SavedDraft savedDraft = null;
     @Nullable
-    private ContentValues replyData = null;
+    private ContentValues threadData = null;
     private boolean saveRequired = true;
     @Nullable
     private Intent attachmentData;
@@ -135,18 +129,14 @@ public class PostReplyFragment extends AwfulFragment {
     // async stuff
     private ContentResolver mContentResolver;
     @NonNull
-    private final DraftReplyLoaderCallback draftLoaderCallback = new DraftReplyLoaderCallback();
+    private final DraftThreadLoaderCallback draftLoaderCallback = new DraftThreadLoaderCallback();
     @NonNull
-    private final ThreadInfoCallback threadInfoCallback = new ThreadInfoCallback();
+    private final ForumInfoCallback forumInfoCallback = new ForumInfoCallback();
 
-    // thread/reply metadata
-    private int mThreadId;
-    private int mPostId;
-    private int mReplyType;
-    @Nullable
-    private String mThreadTitle;
+    // thread metadata
+    private int mForumId;
 
-    // User's reply data
+    // User's thread data
     @Nullable
     private String mFileAttachment;
     private boolean disableEmotes = false;
@@ -171,8 +161,9 @@ public class PostReplyFragment extends AwfulFragment {
     public View onCreateView(LayoutInflater aInflater, ViewGroup aContainer, Bundle aSavedState) {
         super.onCreateView(aInflater, aContainer, aSavedState);
         Timber.v("onCreateView");
-        View view = inflateView(R.layout.post_reply, aContainer, aInflater);
+        View view = inflateView(R.layout.post_thread, aContainer, aInflater);
         getAwfulActivity().setPreferredFont(view);
+
         return view;
     }
 
@@ -186,36 +177,35 @@ public class PostReplyFragment extends AwfulFragment {
         messageComposer.setBackgroundColor(ColorProvider.BACKGROUND.getColor());
         messageComposer.setTextColor(ColorProvider.PRIMARY_TEXT.getColor());
 
-        // grab all the important reply params
+        // grab all the important thread params
         Intent intent = activity.getIntent();
-        mReplyType = intent.getIntExtra(Constants.EDITING, -999);
-        mPostId = intent.getIntExtra(Constants.REPLY_POST_ID, 0);
-        mThreadId = intent.getIntExtra(Constants.REPLY_THREAD_ID, 0);
+        mForumId = intent.getIntExtra(Constants.POST_FORUM_ID, 0);
         setActionBarTitle(getTitle());
+
+        threadIconPicker = (ThreadIconPicker) getFragmentManager().findFragmentById(R.id.thread_icon_picker);
+        threadIconPicker.useForumIcons(mForumId);
+
+        subject = (EditText) activity.findViewById(R.id.thread_subject);
 
         // perform some sanity checking
         boolean badRequest = false;
-        if (mReplyType < 0 || mThreadId == 0) {
-            // we always need a valid type and thread ID
-            badRequest = true;
-        } else if (mPostId == 0 &&
-                (mReplyType == TYPE_EDIT || mReplyType == TYPE_QUOTE)) {
-            // edits and quotes always need a post ID too
+        if (mForumId < 0 || mForumId == 0) {
+            // we always need a valid forum ID
             badRequest = true;
         }
         if (badRequest) {
-            Toast.makeText(activity, "Can't create reply! Bad parameters", Toast.LENGTH_LONG).show();
-            String template = "Failed to init reply activity%nReply type: %d, Thread ID: %d, Post ID: %d";
-            Timber.w(template, mReplyType, mThreadId, mPostId);
+            Toast.makeText(activity, "Can't create thread! Bad parameters", Toast.LENGTH_LONG).show();
+            String template = "Failed to init thread activity%n Forum ID: %d";
+            Timber.w(template, mForumId);
             activity.finish();
         }
 
         mContentResolver = activity.getContentResolver();
-        // load any related stored draft before starting the reply request
-        // TODO: 06/04/2017 probably better to handle this as two separate, completable requests - combine reply and draft data when they're both finished, instead of assuming the draft loader finishes first
+        // load any related stored draft before starting the thread request
+        // TODO: 06/04/2017 probably better to handle this as two separate, completable requests - combine thread and draft data when they're both finished, instead of assuming the draft loader finishes first
         getStoredDraft();
-        refreshThreadInfo();
-        loadReply(mReplyType, mThreadId, mPostId);
+        refreshForumInfo();
+        loadThread(mForumId);
     }
 
 
@@ -227,15 +217,13 @@ public class PostReplyFragment extends AwfulFragment {
                     int permissionCheck = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE);
                     if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
                         this.attachmentData = data;
-                        if (AwfulUtils.isTiramisu33()) {
-                            requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, Constants.AWFUL_PERMISSION_READ_MEDIA_IMAGES);
-                        } else {
-                            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.AWFUL_PERMISSION_READ_EXTERNAL_STORAGE);
-                        }
-                        return;
+                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.AWFUL_PERMISSION_READ_EXTERNAL_STORAGE);
+                    } else {
+                        addAttachment(data);
                     }
+                } else {
+                    addAttachment(data);
                 }
-                addAttachment(data);
             }
         }
     }
@@ -245,7 +233,6 @@ public class PostReplyFragment extends AwfulFragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case Constants.AWFUL_PERMISSION_READ_EXTERNAL_STORAGE:
-            case Constants.AWFUL_PERMISSION_READ_MEDIA_IMAGES:
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     addAttachment();
@@ -260,11 +247,11 @@ public class PostReplyFragment extends AwfulFragment {
 
 
     private void getStoredDraft() {
-        restartLoader(Constants.REPLY_LOADER_ID, null, draftLoaderCallback);
+        restartLoader(Constants.THREAD_DRAFT_LOADER_ID, null, draftLoaderCallback);
     }
 
-    private void refreshThreadInfo() {
-        restartLoader(Constants.MISC_LOADER_ID, null, threadInfoCallback);
+    private void refreshForumInfo() {
+        restartLoader(Constants.FORUM_LOADER_ID, null, forumInfoCallback);
     }
 
 
@@ -274,32 +261,19 @@ public class PostReplyFragment extends AwfulFragment {
 
 
     /**
-     * Initiate a new reply/edit by passing a request to the site and handling its response.
+     * Initiate a new thread by passing a request to the site and handling its response.
      *
-     * @param mReplyType The type of request we're making (reply/quote/edit)
-     * @param mThreadId  The ID of the thread
-     * @param mPostId    The ID of the post being edited/quoted, if applicable
+     * @param mForumId  The ID of the forum
      */
-    private void loadReply(int mReplyType, int mThreadId, int mPostId) {
+    private void loadThread(int mForumId) {
         progressDialog = ProgressDialog.show(getActivity(), "Loading", "Fetching Message...", true, true);
         getAwfulActivity().setPreferredFont(progressDialog.findViewById(android.R.id.title));
-        // create a callback to handle the reply data from the site
+
+        // create a callback to handle the thread data from the site
         AwfulRequest.AwfulResultCallback<ContentValues> loadCallback = new AwfulRequest.AwfulResultCallback<ContentValues>() {
             @Override
             public void success(ContentValues result) {
-                replyData = result;
-                if (result.containsKey(AwfulMessage.REPLY_CONTENT)) {
-                    // update the message composer with the provided reply data
-                    String replyData = NetworkUtils.unencodeHtml(result.getAsString(AwfulMessage.REPLY_CONTENT));
-                    if (!TextUtils.isEmpty(replyData)) {
-                        if (replyData.endsWith("[/quote]")) {
-                            replyData = replyData + "\n\n";
-                        }
-                        messageComposer.setText(replyData, true);
-                    } else {
-                        messageComposer.setText(null, false);
-                    }
-                }
+                threadData = result;
                 // set any options and update the menu
                 postSignature = getCheckedAndRemove(REPLY_SIGNATURE, result);
                 disableEmotes = getCheckedAndRemove(REPLY_DISABLE_SMILIES, result);
@@ -315,21 +289,7 @@ public class PostReplyFragment extends AwfulFragment {
                 getHandler().postDelayed(() -> leave(RESULT_CANCELLED), 3000);
             }
         };
-        switch (mReplyType) {
-            case TYPE_NEW_REPLY:
-                queueRequest(new ReplyRequest(getActivity(), mThreadId).build(this, loadCallback));
-                break;
-            case TYPE_QUOTE:
-                queueRequest(new QuoteRequest(getActivity(), mThreadId, mPostId).build(this, loadCallback));
-                break;
-            case TYPE_EDIT:
-                queueRequest(new EditRequest(getActivity(), mThreadId, mPostId).build(this, loadCallback));
-                break;
-            default:
-                // TODO: 13/04/2017 make an enum/intdef for reply types and just fail early if necessary, shouldn't need to keep checking for bad values everywhere
-                Toast.makeText(getActivity(), "Unknown reply type: " + mReplyType, Toast.LENGTH_LONG).show();
-                leave(RESULT_CANCELLED);
-        }
+        queueRequest(new ThreadRequest(getActivity(), mForumId).build(this, loadCallback));
     }
 
     /**
@@ -349,7 +309,7 @@ public class PostReplyFragment extends AwfulFragment {
      * Take care of any saved draft, allowing the user to use it if appropriate.
      */
     private void handleDraft() {
-        // this implicitly relies on the Draft Reply Loader having already finished, assigning to savedDraft if it found any draft data
+        // this implicitly relies on the Draft Thread Loader having already finished, assigning to savedDraft if it found any draft data
         if (savedDraft == null) {
             return;
         }
@@ -363,11 +323,7 @@ public class PostReplyFragment extends AwfulFragment {
            - the draft is an edit, but not for this post
            in both cases we need to avoid replacing the original post (that we're trying to edit) with some other post's draft
         */
-        // TODO: 11/04/2017 might be better to treat edits and posts/quotes as two separate things, so you can have 1 post and 1 edit saved per thread without them deleting each other
-        if ((savedDraft.type == TYPE_EDIT && savedDraft.postId != mPostId)
-                || savedDraft.type != TYPE_EDIT && mReplyType == TYPE_EDIT) {
-            return;
-        }
+
         // got a useful draft, let the user decide what to do with it
         displayDraftAlert(savedDraft);
     }
@@ -385,24 +341,12 @@ public class PostReplyFragment extends AwfulFragment {
         }
 
         String template = "You have a %s:" +
-                "<br/><br/>" +
+                "<br/><b>%s:</b><br/><br/>" +
                 "<i>%s</i>" +
                 "<br/><br/>" +
                 "Saved %s ago";
 
-        String type;
-        switch (draft.type) {
-            case TYPE_EDIT:
-                type = "Saved Edit";
-                break;
-            case TYPE_QUOTE:
-                type = "Saved Quote";
-                break;
-            case TYPE_NEW_REPLY:
-            default:
-                type = "Saved Reply";
-                break;
-        }
+        String type = "Saved Thread";
 
         final int MAX_PREVIEW_LENGTH = 140;
         String previewText = StringUtils.substring(draft.content, 0, MAX_PREVIEW_LENGTH).replaceAll("\\n", "<br/>");
@@ -410,21 +354,21 @@ public class PostReplyFragment extends AwfulFragment {
             previewText += "...";
         }
 
-        String message = String.format(template, type.toLowerCase(), previewText, epochToSimpleDuration(draft.timestamp));
-        String positiveLabel = (mReplyType == TYPE_QUOTE) ? "Add" : "Use";
+        String message = String.format(template, type, draft.subject , previewText, epochToSimpleDuration(draft.timestamp));
         AlertDialog use = new AlertDialog.Builder(activity)
                 .setIcon(R.drawable.ic_reply_dark)
                 .setTitle(type)
                 .setMessage(Html.fromHtml(message))
-                .setPositiveButton(positiveLabel, (dialog, which) -> {
+                .setPositiveButton("Use", (dialog, which) -> {
                     String newContent = draft.content;
-                    // If we're quoting something, stick it after the draft reply (and add some whitespace too)
-                    if (mReplyType == TYPE_QUOTE) {
-                        newContent += "\n\n" + messageComposer.getText();
-                    }
+                    // If we're quoting something, stick it after the draft thread (and add some whitespace too)
                     messageComposer.setText(newContent, true);
+                    subject.setText(draft.subject);
+                    if(draft.iconId != null && draft.iconUrl != null && draft.iconUrl.length() > 0){
+                        threadIconPicker.useIcon(draft.iconId, draft.iconUrl);
+                    }
                 })
-                .setNegativeButton(R.string.discard, (dialog, which) -> deleteSavedReply())
+                .setNegativeButton(R.string.discard, (dialog, which) -> deleteSavedThread())
                 // avoid accidental draft losses by forcing a decision
                 .setCancelable(false)
                 .show();
@@ -446,33 +390,33 @@ public class PostReplyFragment extends AwfulFragment {
      */
     private void showSubmitDialog() {
         AlertDialog submit = new AlertDialog.Builder(getActivity())
-                .setTitle(String.format("Confirm %s?", mReplyType == TYPE_EDIT ? "Edit" : "Post"))
+                .setTitle("Confirm Post?")
                 .setPositiveButton(R.string.submit,
                         (dialog, button) -> {
                             if (progressDialog == null && getActivity() != null) {
                                 progressDialog = ProgressDialog.show(getActivity(), "Posting", "Hopefully it didn't suck...", true, true);
                                 getAwfulActivity().setPreferredFont(progressDialog.findViewById(android.R.id.title));
                             }
-                            saveReply();
-                            submitPost();
+                            saveThread();
+                            submitThread();
                         })
                 .setNeutralButton(R.string.preview, (dialog, button) -> previewPost())
                 .setNegativeButton(R.string.cancel, (dialog, button) -> {
-                })
-                .show();
+                }).show();
 
         getAwfulActivity().setPreferredFont(submit.findViewById(androidx.appcompat.R.id.alertTitle));
         getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.message));
         getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button1));
         getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button2));
         getAwfulActivity().setPreferredFont(submit.findViewById(android.R.id.button3));
+
     }
 
 
     /**
      * Actually submit the post/edit to the site.
      */
-    private void submitPost() {
+    private void submitThread() {
         ContentValues cv = prepareCV();
         if (cv == null) {
             return;
@@ -481,7 +425,7 @@ public class PostReplyFragment extends AwfulFragment {
             @Override
             public void success(Void result) {
                 dismissProgressDialog();
-                deleteSavedReply();
+                deleteSavedThread();
                 saveRequired = false;
 
                 Context context = getContext();
@@ -489,24 +433,16 @@ public class PostReplyFragment extends AwfulFragment {
                     Toast.makeText(context, context.getString(R.string.post_sent), Toast.LENGTH_LONG).show();
                 }
                 mContentResolver.notifyChange(AwfulThread.CONTENT_URI, null);
-                leave(mReplyType == TYPE_EDIT ? mPostId : RESULT_POSTED);
+                leave(RESULT_POSTED);
             }
 
             @Override
             public void failure(VolleyError error) {
                 dismissProgressDialog();
-                saveReply();
+                saveThread();
             }
         };
-        switch (mReplyType) {
-            case TYPE_QUOTE:
-            case TYPE_NEW_REPLY:
-                queueRequest(new SendPostRequest(getActivity(), cv).build(this, postCallback));
-                break;
-            case TYPE_EDIT:
-                queueRequest(new SendEditRequest(getActivity(), cv).build(this, postCallback));
-                break;
-        }
+        queueRequest(new SendThreadRequest(getActivity(), cv).build(this, postCallback));
     }
 
 
@@ -544,11 +480,8 @@ public class PostReplyFragment extends AwfulFragment {
             }
         };
 
-        if (mReplyType == TYPE_EDIT) {
-            queueRequest(new PreviewEditRequest(getActivity(), cv).build(this, previewCallback));
-        } else {
-            queueRequest(new PreviewPostRequest(getActivity(), cv).build(this, previewCallback));
-        }
+
+        queueRequest(new PreviewThreadRequest(getActivity(), cv).build(this, previewCallback));
     }
 
 
@@ -561,18 +494,18 @@ public class PostReplyFragment extends AwfulFragment {
      */
     @Nullable
     private ContentValues prepareCV() {
-        if (replyData == null || replyData.getAsInteger(AwfulMessage.ID) == null) {
+        if (threadData == null || threadData.getAsInteger(AwfulMessage.ID) == null) {
             // TODO: if this ever happens, the ID never gets set (and causes an NPE in SendPostRequest) - handle this in a better way?
-            // Could use the mThreadId value, but that might be incorrect at this point and post to the wrong thread? Is null reply data an exceptional event?
-            Log.e(TAG, "No reply data in sendPost() - no thread ID to post to!");
+            // Could use the mThreadId value, but that might be incorrect at this point and post to the wrong thread? Is null thread data an exceptional event?
+            Log.e(TAG, "No thread data in sendPost() - no thread ID to post to!");
             Activity activity = getActivity();
             if (activity != null) {
                 Toast.makeText(activity, "Unknown thread ID - can't post!", Toast.LENGTH_LONG).show();
             }
             return null;
         }
-        ContentValues cv = new ContentValues(replyData);
-        if (isReplyEmpty()) {
+        ContentValues cv = new ContentValues(threadData);
+        if (isOPEmpty()) {
             dismissProgressDialog();
             getAlertView().setTitle(R.string.message_empty)
                     .setSubtitle(R.string.message_empty_subtext)
@@ -588,7 +521,11 @@ public class PostReplyFragment extends AwfulFragment {
         if (disableEmotes) {
             cv.put(AwfulMessage.REPLY_DISABLE_SMILIES, Constants.YES);
         }
-        cv.put(AwfulMessage.REPLY_CONTENT, messageComposer.getText());
+
+        cv.put(AwfulMessage.POST_SUBJECT, subject.getText().toString());
+        cv.put(AwfulMessage.POST_ICON_ID, threadIconPicker.getIcon().iconId);
+        cv.put(AwfulMessage.POST_ICON_URL, threadIconPicker.getIcon().iconUrl);
+        cv.put(AwfulMessage.POST_CONTENT, messageComposer.getText());
         return cv;
     }
 
@@ -601,7 +538,6 @@ public class PostReplyFragment extends AwfulFragment {
     @Override
     public void onResume() {
         super.onResume();
-        updateThreadTitle();
         Timber.v("onResume");
     }
 
@@ -618,12 +554,12 @@ public class PostReplyFragment extends AwfulFragment {
         super.onDestroyView();
         Log.e(TAG, "onDestroyView");
         // final cleanup - some should have already been done in onPause (draft saving etc)
-        getLoaderManager().destroyLoader(Constants.REPLY_LOADER_ID);
-        getLoaderManager().destroyLoader(Constants.MISC_LOADER_ID);
+        getLoaderManager().destroyLoader(Constants.THREAD_DRAFT_LOADER_ID);
+        getLoaderManager().destroyLoader(Constants.FORUM_LOADER_ID);
     }
 
     /**
-     * Tasks to perform when the reply window moves from the foreground.
+     * Tasks to perform when the thread window moves from the foreground.
      * Basically saves a draft if required, and hides elements like the keyboard
      */
     private void cleanupTasks() {
@@ -634,7 +570,7 @@ public class PostReplyFragment extends AwfulFragment {
 
 
     /**
-     * Finish the reply activity, performing cleanup and returning a result code to the activity that created it.
+     * Finish the thread activity, performing cleanup and returning a result code to the activity that created it.
      */
     private void leave(int activityResult) {
         final AwfulActivity activity = getAwfulActivity();
@@ -656,20 +592,20 @@ public class PostReplyFragment extends AwfulFragment {
         Activity activity = getActivity();
         if (activity == null) {
             return;
-        } else if (isReplyEmpty()) {
+        } else if (isOPEmpty()) {
             leave(RESULT_CANCELLED);
             return;
         }
         AlertDialog save = new AlertDialog.Builder(activity)
                 .setIcon(R.drawable.ic_reply_dark)
-                .setMessage(String.format("Save this %s?", mReplyType == TYPE_EDIT ? "edit" : "post"))
+                .setMessage("Save this thread?")
                 .setPositiveButton(R.string.save, (dialog, button) -> {
                     // let #autoSave handle it on leaving
                     saveRequired = true;
                     leave(RESULT_CANCELLED);
                 })
                 .setNegativeButton(R.string.discard, (dialog, which) -> {
-                    deleteSavedReply();
+                    deleteSavedThread();
                     saveRequired = false;
                     leave(RESULT_CANCELLED);
                 })
@@ -677,6 +613,7 @@ public class PostReplyFragment extends AwfulFragment {
                 })
                 .setCancelable(true)
                 .show();
+
 
         getAwfulActivity().setPreferredFont(save.findViewById(androidx.appcompat.R.id.alertTitle));
         getAwfulActivity().setPreferredFont(save.findViewById(android.R.id.message));
@@ -696,47 +633,49 @@ public class PostReplyFragment extends AwfulFragment {
      */
     private void autoSave() {
         if (saveRequired && messageComposer != null) {
-            if (isReplyEmpty()) {
+            if (isOPEmpty()) {
                 Log.i(TAG, "Message unchanged, discarding.");
                 // TODO: 12/02/2017 does this actually need to check if it's unchanged?
-                deleteSavedReply();//if the reply is unchanged, throw it out.
+                deleteSavedThread();//if the thread is unchanged, throw it out.
                 messageComposer.setText(null, false);
             } else {
                 Log.i(TAG, "Message Unsent, saving.");
-                saveReply();
+                saveThread();
             }
         }
     }
 
 
     /**
-     * Delete any saved reply for the current thread
+     * Delete any saved thread for the current thread
      */
-    private void deleteSavedReply() {
-        mContentResolver.delete(AwfulMessage.CONTENT_URI_REPLY, AwfulMessage.ID + "=?", AwfulProvider.int2StrArray(mThreadId));
+    private void deleteSavedThread() {
+        mContentResolver.delete(AwfulMessage.CONTENT_URI_THREAD, AwfulMessage.ID + "=?", AwfulProvider.int2StrArray(mForumId));
     }
 
 
     /**
-     * Save a draft reply for the current thread.
+     * Save a draft thread for the current thread.
      */
-    private void saveReply() {
-        if (getActivity() != null && mThreadId > 0 && messageComposer != null) {
+    private void saveThread() {
+        if (getActivity() != null && mForumId > 0 && messageComposer != null) {
             String content = messageComposer.getText();
             // don't save if the message is empty/whitespace
             // not trimming the actual content, so we retain any whitespace e.g. blank lines after quotes
             if (!content.trim().isEmpty()) {
-                Log.i(TAG, "Saving reply! " + content);
-                ContentValues post = (replyData == null) ? new ContentValues() : new ContentValues(replyData);
-                post.put(AwfulMessage.ID, mThreadId);
-                post.put(AwfulMessage.TYPE, mReplyType);
-                post.put(AwfulMessage.REPLY_CONTENT, content);
+                Log.i(TAG, "Saving thread! " + content);
+                ContentValues post = (threadData == null) ? new ContentValues() : new ContentValues(threadData);
+                post.put(AwfulMessage.ID, mForumId);
+                post.put(AwfulMessage.POST_CONTENT, content);
                 post.put(AwfulMessage.EPOC_TIMESTAMP, System.currentTimeMillis());
+                post.put(AwfulMessage.POST_SUBJECT, subject.getText().toString());
+                post.put(AwfulMessage.POST_ICON_ID, threadIconPicker.getIcon().iconId);
+                post.put(AwfulMessage.POST_ICON_URL, threadIconPicker.getIcon().iconUrl);
                 if (mFileAttachment != null) {
                     post.put(AwfulMessage.REPLY_ATTACHMENT, mFileAttachment);
                 }
-                if (mContentResolver.update(ContentUris.withAppendedId(AwfulMessage.CONTENT_URI_REPLY, mThreadId), post, null, null) < 1) {
-                    mContentResolver.insert(AwfulMessage.CONTENT_URI_REPLY, post);
+                if (mContentResolver.update(ContentUris.withAppendedId(AwfulMessage.CONTENT_URI_THREAD, mForumId), post, null, null) < 1) {
+                    mContentResolver.insert(AwfulMessage.CONTENT_URI_THREAD, post);
                 }
             }
         }
@@ -751,7 +690,7 @@ public class PostReplyFragment extends AwfulFragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         Timber.v("onCreateOptionsMenu");
-        inflater.inflate(R.menu.post_reply, menu);
+        inflater.inflate(R.menu.post_thread, menu);
 
         MenuItem attach = menu.findItem(R.id.add_attachment);
         if (attach != null && getPrefs() != null) {
@@ -1011,7 +950,7 @@ public class PostReplyFragment extends AwfulFragment {
     /**
      * Utility method to check if the composer contains an empty post
      */
-    private boolean isReplyEmpty() {
+    private boolean isOPEmpty() {
         return messageComposer.getText().trim().isEmpty();
     }
 
@@ -1056,29 +995,9 @@ public class PostReplyFragment extends AwfulFragment {
         }
     }
 
-
-    /**
-     * Update the title view to show the current thread title, if we have it
-     */
-    private void updateThreadTitle() {
-        TextView threadTitleView = getActivity().findViewById(R.id.thread_title);
-        if (threadTitleView != null) {
-            threadTitleView.setText(mThreadTitle == null ? "" : mThreadTitle);
-        }
-        getAwfulActivity().setPreferredFont(threadTitleView);
-    }
-
     @Override
     public String getTitle() {
-        switch (mReplyType) {
-            case TYPE_EDIT:
-                return "Editing";
-            case TYPE_QUOTE:
-                return "Quote";
-            case TYPE_NEW_REPLY:
-            default:
-                return "Reply";
-        }
+        return "Post Thread";
     }
 
 
@@ -1090,13 +1009,13 @@ public class PostReplyFragment extends AwfulFragment {
     /**
      * Provides a Loader that pulls draft data for the current thread from the DB.
      */
-    private class DraftReplyLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+    private class DraftThreadLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
 
         public Loader<Cursor> onCreateLoader(int aId, Bundle aArgs) {
-            Log.i(TAG, "Create Reply Cursor: " + mThreadId);
+            Log.i(TAG, "Create Thread Cursor: " + mForumId);
             return new CursorLoader(getActivity(),
-                    ContentUris.withAppendedId(AwfulMessage.CONTENT_URI_REPLY, mThreadId),
-                    AwfulProvider.DraftPostProjection,
+                    ContentUris.withAppendedId(AwfulMessage.CONTENT_URI_THREAD, mForumId),
+                    AwfulProvider.DraftThreadProjection,
                     null,
                     null,
                     null);
@@ -1108,18 +1027,20 @@ public class PostReplyFragment extends AwfulFragment {
                 return;
             }
             // if there's some quote data, deserialise it into a SavedDraft
-            String quoteData = aData.getString(aData.getColumnIndex(AwfulMessage.REPLY_CONTENT));
+            String quoteData = aData.getString(aData.getColumnIndex(AwfulMessage.POST_CONTENT));
             if (TextUtils.isEmpty(quoteData)) {
                 return;
             }
-            int draftType = aData.getInt(aData.getColumnIndex(AwfulMessage.TYPE));
-            int postId = aData.getInt(aData.getColumnIndex(AwfulPost.EDIT_POST_ID));
+            String subject = aData.getString(aData.getColumnIndex(AwfulMessage.POST_SUBJECT));
             long draftTimestamp = aData.getLong(aData.getColumnIndex(AwfulMessage.EPOC_TIMESTAMP));
-            String draftReply = NetworkUtils.unencodeHtml(quoteData);
+            String draftThread = NetworkUtils.unencodeHtml(quoteData);
 
-            savedDraft = new SavedDraft(draftType, draftReply, postId, draftTimestamp);
+            String draftIconId = aData.getString(aData.getColumnIndex(AwfulMessage.POST_ICON_ID));
+            String draftIconUrl = aData.getString(aData.getColumnIndex(AwfulMessage.POST_ICON_URL));
+
+            savedDraft = new SavedDraft(draftThread, subject,draftIconId,draftIconUrl, draftTimestamp);
             if (Constants.DEBUG) {
-                Log.i(TAG, draftType + "Saved reply message: " + draftReply);
+                Log.i(TAG, "Saved thread message: " + draftThread);
             }
         }
 
@@ -1133,20 +1054,15 @@ public class PostReplyFragment extends AwfulFragment {
     /**
      * Provides a Loader that gets metadata for the current thread, and dsiplays its title
      */
-    private class ThreadInfoCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+    private class ForumInfoCallback implements LoaderManager.LoaderCallbacks<Cursor> {
 
         public Loader<Cursor> onCreateLoader(int aId, Bundle aArgs) {
-            return new CursorLoader(getActivity(), ContentUris.withAppendedId(AwfulThread.CONTENT_URI, mThreadId),
-                    AwfulProvider.ThreadProjection, null, null, null);
+            return new CursorLoader(getActivity(), ContentUris.withAppendedId(AwfulForum.CONTENT_URI, mForumId),
+                    AwfulProvider.ForumProjection, null, null, null);
         }
 
         public void onLoadFinished(Loader<Cursor> aLoader, Cursor aData) {
             Log.v(TAG, "Thread title finished, populating.");
-            if (aData.moveToFirst()) {
-                //threadClosed = aData.getInt(aData.getColumnIndex(AwfulThread.LOCKED))>0;
-                mThreadTitle = aData.getString(aData.getColumnIndex(AwfulThread.TITLE));
-                updateThreadTitle();
-            }
         }
 
         @Override
@@ -1156,16 +1072,18 @@ public class PostReplyFragment extends AwfulFragment {
 
 
     private static class SavedDraft {
-        private final int type;
         @NonNull
         private final String content;
-        private final int postId;
+        private final String iconId;
+        private final String iconUrl;
+        private final String subject;
         private final long timestamp;
 
-        SavedDraft(int type, @NonNull String content, int postId, long timestamp) {
-            this.type = type;
+        SavedDraft(@NonNull String content, String subject, String iconId, String iconUrl, long timestamp) {
             this.content = content;
-            this.postId = postId;
+            this.subject = subject;
+            this.iconId = iconId;
+            this.iconUrl = iconUrl;
             this.timestamp = timestamp;
         }
     }

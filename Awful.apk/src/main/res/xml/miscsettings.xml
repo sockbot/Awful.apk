@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-        <PreferenceCategory android:title="@string/misc_category_display">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+        <PreferenceCategory
+            app:iconSpaceReserved="false"
+            android:title="@string/misc_category_display">
             <ListPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_page_layout"
                 android:title="@string/page_layout"
                 android:entries="@array/page_layouts"
@@ -11,6 +15,7 @@
                 android:enabled="false"
                 />
             <ListPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_orientation"
                 android:title="@string/orientation"
                 android:entries="@array/orientations"
@@ -18,18 +23,21 @@
                 android:defaultValue="default"
                 />
             <SwitchPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_no_fab"
                 android:title="@string/no_fab"
                 android:summary="@string/no_fab_summary"
                 android:defaultValue="false"
                 />
             <SwitchPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_immersion_mode"
                 android:title="@string/immersion_mode"
                 android:summary="@string/immersion_mode_summary"
                 android:defaultValue="false"
                 />
             <ListPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_transformer"
                 android:title="@string/transformer"
                 android:summary="%s"
@@ -39,26 +47,32 @@
                 />
         </PreferenceCategory>
 
-        <PreferenceCategory android:title="@string/misc_category_navigation">
+        <PreferenceCategory
+        app:iconSpaceReserved="false"
+        android:title="@string/misc_category_navigation">
             <SwitchPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_disable_pull_next"
                 android:title="@string/disable_pull_next"
                 android:summary="@string/disable_pull_next_summary"
                 android:defaultValue="false"
                 />
             <Preference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_pull_to_refresh_distance"
                 android:title="@string/pull_to_refresh_distance"
                 android:summary="@string/pull_to_refresh_distance_summary"
                 android:defaultValue="0.5"
                 />
             <SwitchPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_lock_scrolling"
                 android:title="@string/lock_scrolling"
                 android:summary="@string/lock_scrolling_summary"
                 android:defaultValue="false"
                 />
             <SwitchPreference
+                app:iconSpaceReserved="false"
                 android:key="@string/pref_key_volume_scroll"
                 android:title="@string/volume_scroll"
                 android:summary="@string/volume_scroll_summary"

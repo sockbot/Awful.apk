@@ -1,51 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
+        app:iconSpaceReserved="false"
         android:selectable="false"
         android:summary="@string/post_embedding_description"
         />
 
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_inline_tweets"
         android:title="@string/inline_tweets"
         />
 
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_inline_instagram"
         android:title="@string/inline_instagram"
         />
 
     <SwitchPreference
+        app:iconSpaceReserved="false"
         android:defaultValue="true"
         android:key="@string/pref_key_inline_soundcloud"
         android:title="@string/inline_soundcloud"
         />
 
     <PreferenceCategory
+        app:iconSpaceReserved="false"
         android:title="@string/post_embedding_divider_videos">
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:defaultValue="true"
             android:key="@string/pref_key_inline_youtube"
             android:title="@string/inline_youtube"
             />
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:defaultValue="false"
             android:key="@string/pref_key_inline_tiktoks"
             android:title="@string/inline_tiktoks"
             />
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:defaultValue="false"
             android:key="@string/pref_key_inline_vines"
             android:title="@string/inline_vines"
             />
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:defaultValue="false"
             android:key="@string/pref_key_inline_twitch"
             android:summary="@string/inline_twitch_summary"
@@ -53,6 +63,7 @@
             />
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:defaultValue="false"
             android:key="@string/pref_key_inline_webm"
             android:summary="@string/inline_webm_summary"
@@ -60,6 +71,7 @@
             />
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:defaultValue="true"
             android:dependency="@string/pref_key_inline_webm"
             android:key="@string/pref_key_autostart_webm"

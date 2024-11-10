@@ -51,9 +51,13 @@ function containerInit() {
 	container.addEventListener('touchstart', function touchStartHandler(event) {
 		var target = event.target;
 		// title popup on long-press
-		if ((target.tagName === 'IMG' || target.tagName === 'CANVAS') && target.hasAttribute('title')) {
+		if ((target.tagName === 'IMG' || target.tagName === 'CANVAS')) {
 			Longtap(function longtap() {
-				listener.popupText(target.getAttribute('title'));
+				if (target.hasAttribute('title')) {
+					listener.popupText(target.getAttribute('title'));
+				} else {
+					showImageZoom(target.src)
+				}
 			})(event);
 			return;
 		}
@@ -65,12 +69,12 @@ function containerInit() {
 		}
 		var bbcBlock = findInPath(event, 'bbc-block', true);
 		if (bbcBlock && !!bbcBlock.className.match(/pre|code|php/ig)) {
-            listener.haltSwipe();
-            document.addEventListener('touchend', handleTouchLeave);
-            document.addEventListener('touchleave', handleTouchLeave);
-            document.addEventListener('touchcancel', handleTouchLeave);
+			listener.haltSwipe();
+			document.addEventListener('touchend', handleTouchLeave);
+			document.addEventListener('touchleave', handleTouchLeave);
+			document.addEventListener('touchcancel', handleTouchLeave);
 		}
-	}, {passive: true});
+	}, { passive: true });
 	// Auto-starting of videos
 	if (listener.getPreference('inlineWebm') === 'true' && listener.getPreference('autostartWebm') === 'true') {
 		var debouncedVideosScrollListener = debounce(pauseVideosOutOfView, 250);
@@ -122,6 +126,7 @@ function loadPageHtml() {
 	if (!html) {
 		return;
 	}
+	exitImageZoom();
 	pageInit();
 	window.topScrollTimeout = window.setTimeout(function hello() {
 		window.dispatchEvent(new Event('awful-scroll-post'));
@@ -189,26 +194,26 @@ function processPosts(scopeElement) {
 		highlightOwnQuotes(scopeElement);
 	}
 
-    // handle all GIFs that are not avatars
+	// handle all GIFs that are not avatars
 	if (listener.getPreference('disableGifs') === 'true') {
 		scopeElement.querySelectorAll('img[title][src$=".gif"]:not(.avatar)').forEach(prepareFreezeGif);
 	}
 
-    // this handles all avatar processing, meaning if the avatar is a GIF we need to handle freezing as well
-    scopeElement.querySelectorAll("img[title].avatar").forEach(function each(img) {
-        img.addEventListener('load', processSecondaryAvatar);
-    });
-    function processSecondaryAvatar() {
-        // when people want to use gangtags as avatars, etc., they often use a 1x1 image as their primary avatar.
-        // if this is the case, we change over to a "secondary" avatar, which is probably what's intended.
-        if (this.naturalWidth === 1 && this.naturalHeight === 1 && this.dataset.avatarSecondSrc && this.dataset.avatarSecondSrc.length) {
-            this.src = this.dataset.avatarSecondSrc;
-        }
+	// this handles all avatar processing, meaning if the avatar is a GIF we need to handle freezing as well
+	scopeElement.querySelectorAll("img[title].avatar").forEach(function each(img) {
+		img.addEventListener('load', processSecondaryAvatar);
+	});
+	function processSecondaryAvatar() {
+		// when people want to use gangtags as avatars, etc., they often use a 1x1 image as their primary avatar.
+		// if this is the case, we change over to a "secondary" avatar, which is probably what's intended.
+		if (this.naturalWidth === 1 && this.naturalHeight === 1 && this.dataset.avatarSecondSrc && this.dataset.avatarSecondSrc.length) {
+			this.src = this.dataset.avatarSecondSrc;
+		}
 
-        if (listener.getPreference('disableGifs') === 'true' && this.src.slice(-4) === ".gif") {
-            prepareFreezeGif(this);
-        }
-    }
+		if (listener.getPreference('disableGifs') === 'true' && this.src.slice(-4) === ".gif") {
+			prepareFreezeGif(this);
+		}
+	}
 }
 
 /**
@@ -216,7 +221,7 @@ function processPosts(scopeElement) {
  * @param {Element} scopeElement The element containing videos to pause
  */
 function pauseVideosOutOfView(scopeElement) {
-    scopeElement = scopeElement || document;
+	scopeElement = scopeElement || document;
 	scopeElement.querySelectorAll('video').forEach(function eachVideo(video) {
 		if (isElementInViewport(video) && video.parentElement.parentElement.tagName !== 'BLOCKQUOTE' && video.firstElementChild.src.indexOf('webm') === -1) {
 			video.play();
@@ -300,6 +305,131 @@ function showReadPosts() {
 }
 
 /**
+ * Creates an overlay to allow zooming an image
+ * Based on https://codepen.io/josephmaynard/pen/OjWvNP
+ * @param {string} url url to zoom into
+ */
+function showImageZoom(url) {
+	listener.setZoomEnabled(true);
+	var zoom = document.createElement('div');
+	zoom.setAttribute('id', 'zoom');
+	zoom.classList.add('zoom-enabled');
+	document.body.appendChild(zoom)
+	var zoomClose = document.createElement('div');
+	zoomClose.setAttribute('id', 'zoom-close');
+	document.body.appendChild(zoomClose)
+	zoomClose.addEventListener('click', exitImageZoom);
+
+    var minScale = 1;
+    let maxScale = 5;
+    let imageWidth;
+    let imageHeight;
+    let containerWidth;
+    let containerHeight;
+    let imageX = 0;
+    let imageY = 0;
+    let imageScale = 1;
+
+    let displayDefaultWidth;
+    let displayDefaultHeight;
+
+    let rangeX = 0;
+    let rangeMaxX = 0;
+    let rangeMinX = 0;
+
+    let rangeY = 0;
+    let rangeMaxY = 0;
+    let rangeMinY = 0;
+
+    let imageRangeY = 0;
+
+    let imageCurrentX = 0;
+    let imageCurrentY = 0;
+    let imageCurrentScale = 1;
+
+
+    function resizeContainer() {
+      containerWidth = zoom.offsetWidth;
+      containerHeight = zoom.offsetHeight;
+    }
+
+    resizeContainer();
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(min, value), max);
+    }
+
+    function clampScale(newScale) {
+      return clamp(newScale, minScale, maxScale);
+    }
+
+    const image = new Image();
+    image.src = url;
+    image.onload = function () {
+      imageWidth = image.width;
+      imageHeight = image.height;
+      zoom.appendChild(image);
+      image.addEventListener('mousedown', e => e.preventDefault(), false);
+      displayDefaultWidth = image.offsetWidth;
+      displayDefaultHeight = image.offsetHeight;
+      rangeX = Math.max(0, displayDefaultWidth - containerWidth);
+      rangeY = Math.max(0, displayDefaultHeight - containerHeight);
+    }
+
+
+    function updateImage(x, y, scale) {
+      const transform = 'translateX(' + x + 'px) translateY(' + y + 'px) translateZ(0px) scale(' + scale + ',' + scale + ')';
+      image.style.transform = transform;
+    }
+
+    function updateRange() {
+      rangeX = Math.max(0, Math.round(displayDefaultWidth * imageCurrentScale) - containerWidth);
+      rangeY = Math.max(0, Math.round(displayDefaultHeight * imageCurrentScale) - containerHeight);
+
+      rangeMaxX = Math.round(rangeX / 2);
+      rangeMinX = 0 - rangeMaxX;
+
+      rangeMaxY = Math.round(rangeY / 2);
+      rangeMinY = 0 - rangeMaxY;
+    }
+
+    const hammertime = new Hammer(zoom,{ inputClass: Hammer.TouchMouseInput });
+
+    hammertime.get('pinch').set({ enable: true });
+    hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+
+    hammertime.on('pan', function(ev) {
+      imageCurrentX = clamp(imageX + ev.deltaX, rangeMinX, rangeMaxX);
+      imageCurrentY = clamp(imageY + ev.deltaY, rangeMinY, rangeMaxY);
+      updateImage(imageCurrentX, imageCurrentY, imageScale);
+    });
+
+    hammertime.on('pinch pinchmove',function (ev) {
+      imageCurrentScale = clampScale(ev.scale * imageScale);
+      updateRange();
+      imageCurrentX = clamp(imageX + ev.deltaX, rangeMinX, rangeMaxX);
+      imageCurrentY = clamp(imageY + ev.deltaY, rangeMinY, rangeMaxY);
+      updateImage(imageCurrentX, imageCurrentY, imageCurrentScale);
+    });
+
+    hammertime.on('panend pancancel pinchend pinchcancel', function(){
+      imageScale = imageCurrentScale;
+      imageX = imageCurrentX;
+      imageY = imageCurrentY;
+    });
+}
+
+/**
+ * Exists the zoom overlay
+ */
+function exitImageZoom() {
+	if(!document.getElementById('zoom')){ return }
+    document.getElementById('zoom').remove();
+    document.getElementById('zoom-close').remove();
+	listener.setZoomEnabled(false);
+}
+
+/**
  * Load an image url and replace links with the image. Handles paused gifs and basic text links.
  * @param {String} url The image URL
  */
@@ -364,7 +494,7 @@ function changeFontFace(font) {
 		var styleElement = document.createElement('style');
 		styleElement.id = 'font-face';
 		styleElement.setAttribute('type', 'text/css');
-		styleElement.textContent = '@font-face { font-family: userselected; src: url(\'content://com.ferg.awfulapp.webprovider/' + font + '\'); }';
+		styleElement.textContent = '@font-face { font-family: userselected; src: url(\'file:///android_asset/' + font + '\'); }';
 		document.head.appendChild(styleElement);
 	}
 }
@@ -392,13 +522,13 @@ function freezeGif(image) {
  * @param {Element} image Gif image to monitor
  */
 function prepareFreezeGif(image) {
-    if (!image.complete) {
-        image.addEventListener('load', function freezeLoadHandler() {
-            freezeGif(image);
-        });
-    } else {
-        freezeGif(image);
-    }
+	if (!image.complete) {
+		image.addEventListener('load', function freezeLoadHandler() {
+			freezeGif(image);
+		});
+	} else {
+		freezeGif(image);
+	}
 }
 
 /**
@@ -467,9 +597,9 @@ function handleQuoteLink(link, event) {
  * @param {Element} info The HTMLElement of the postinfo
  */
 function toggleInfo(info) {
-    var posterTitle = info.querySelector('.postinfo-title');
-    var posterRegDate = info.querySelector('.postinfo-regdate');
-    if (!posterTitle) { return; }
+	var posterTitle = info.querySelector('.postinfo-title');
+	var posterRegDate = info.querySelector('.postinfo-regdate');
+	if (!posterTitle) { return; }
 
 	if (posterTitle.classList.contains('extended')) {
 		if (info.querySelector('.avatar') !== null) {
@@ -484,9 +614,9 @@ function toggleInfo(info) {
 		posterTitle.classList.remove('extended');
 		posterTitle.setAttribute('aria-hidden', 'true');
 		if (posterRegDate) {
-            posterRegDate.classList.remove('extended');
-            posterRegDate.setAttribute('aria-hidden', 'true');
-        }
+			posterRegDate.classList.remove('extended');
+			posterRegDate.setAttribute('aria-hidden', 'true');
+		}
 	} else {
 		if (info.querySelector('.avatar') !== null) {
 			if (info.querySelector('canvas') !== null) {
@@ -503,9 +633,9 @@ function toggleInfo(info) {
 		posterTitle.classList.add('extended');
 		posterTitle.setAttribute('aria-hidden', 'false');
 		if (posterRegDate) {
-            posterRegDate.classList.add('extended');
-            posterRegDate.setAttribute('aria-hidden', 'false');
-        }
+			posterRegDate.classList.add('extended');
+			posterRegDate.setAttribute('aria-hidden', 'false');
+		}
 	}
 }
 
@@ -514,7 +644,7 @@ function toggleInfo(info) {
  * @param {Element} postMenu The HTMLElement of the postmenu
  */
 function showPostMenu(postMenu) {
-// temp hack to create the right menu for rap sheet entries without making its own CSS class etc
+	// temp hack to create the right menu for rap sheet entries without making its own CSS class etc
 	if (postMenu.hasAttribute('badPostUrl')) {
 		showPunishmentMenu(postMenu);
 		return;
@@ -716,16 +846,16 @@ function handleTouchLeave() {
  * Hides all instances of the given avatar on the page
  */
 function hideAvatar(avatarUrl) {
-    document.querySelectorAll('[src="' + avatarUrl + '"]').forEach(function(avatarTag) {
-        avatarTag.classList.add('hide-avatar');
-    });
+	document.querySelectorAll('[src="' + avatarUrl + '"]').forEach(function (avatarTag) {
+		avatarTag.classList.add('hide-avatar');
+	});
 }
 
 /**
  * Shows all instances of the given avatar on the page
  */
 function showAvatar(avatarUrl) {
-    document.querySelectorAll('[src="' + avatarUrl + '"]').forEach(function(avatarTag) {
-        avatarTag.classList.remove('hide-avatar');
-    });
+	document.querySelectorAll('[src="' + avatarUrl + '"]').forEach(function (avatarTag) {
+		avatarTag.classList.remove('hide-avatar');
+	});
 }

@@ -95,6 +95,7 @@ public class ForumsIndexFragment extends AwfulFragment
         updateViewColours();
         refreshProbationBar();
         forumsListSwitcher.setInAnimation(AnimationUtils.makeInAnimation(getContext(), true));
+        getAwfulActivity().setPreferredFont(view);
         return view;
     }
 

@@ -54,6 +54,7 @@ public class AnnouncementsFragment extends AwfulFragment {
         binding = AnnouncementsFragmentBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
         initialiseWebView();
+        getAwfulActivity().setPreferredFont(view);
         return view;
     }
 

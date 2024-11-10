@@ -162,6 +162,8 @@ public class AwfulPreferences implements OnSharedPreferenceChangeListener {
     public boolean immersionMode;
     public String transformer;
 
+	public boolean postWarningAccepted;
+
 	// APP VERSION STUFF
     public int alertIDShown;
 	public int lastVersionSeen;
@@ -312,6 +314,7 @@ public class AwfulPreferences implements OnSharedPreferenceChangeListener {
 		forumIndexShowSections	 = getPreference(Keys.FORUM_INDEX_SHOW_SECTIONS, true);
 		forumIndexShowSubtitles	 = getPreference(Keys.FORUM_INDEX_SHOW_SUBTITLES, true);
 		forumIndexHideSubforums	 = getPreference(Keys.FORUM_INDEX_HIDE_SUBFORUMS, true);
+		postWarningAccepted 	 = getPreference(Keys.POST_WARNING_ACCEPTED, false);
 
         //I have never seen this before oh god
     }

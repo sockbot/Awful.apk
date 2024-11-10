@@ -136,6 +136,7 @@ public abstract class Keys {
             FORUM_INDEX_SHOW_SECTIONS,
             FORUM_INDEX_SHOW_SUBTITLES,
             FORUM_INDEX_HIDE_SUBFORUMS,
+            POST_WARNING_ACCEPTED
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface BooleanPreference {
@@ -224,4 +225,6 @@ public abstract class Keys {
 
     public static final int MARKED_USERS = R.string.pref_key_marked_users;
     public static final int BLOCKED_AVATAR_URLS = R.string.pref_key_blocked_avatar_urls;
+
+    public static final int POST_WARNING_ACCEPTED = R.string.pref_key_post_warning_accepted;
 }

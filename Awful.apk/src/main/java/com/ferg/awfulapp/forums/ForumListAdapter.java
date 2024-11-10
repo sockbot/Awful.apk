@@ -16,6 +16,7 @@ import com.bignerdranch.expandablerecyclerview.Adapter.ExpandableRecyclerAdapter
 import com.bignerdranch.expandablerecyclerview.Model.ParentListItem;
 import com.bignerdranch.expandablerecyclerview.ViewHolder.ChildViewHolder;
 import com.bignerdranch.expandablerecyclerview.ViewHolder.ParentViewHolder;
+import com.ferg.awfulapp.AwfulActivity;
 import com.ferg.awfulapp.R;
 import com.ferg.awfulapp.databinding.ForumIndexItemBinding;
 import com.ferg.awfulapp.databinding.ForumIndexSubforumItemBinding;
@@ -37,6 +38,7 @@ import static com.ferg.awfulapp.forums.Forum.SECTION;
  */
 public class ForumListAdapter extends ExpandableRecyclerAdapter<ForumListAdapter.TopLevelForumHolder, ForumListAdapter.SubforumHolder> {
 
+    private final AwfulActivity parent;
     private final AwfulPreferences awfulPrefs;
     @NonNull
     private final EventListener eventListener;
@@ -54,6 +56,7 @@ public class ForumListAdapter extends ExpandableRecyclerAdapter<ForumListAdapter
                              @NonNull EventListener listener,
                              @Nullable AwfulPreferences awfulPreferences) {
         super(topLevelForums);
+        parent = (AwfulActivity) context;
         eventListener = listener;
         awfulPrefs = awfulPreferences;
         inflater = LayoutInflater.from(context);
@@ -272,6 +275,8 @@ public class ForumListAdapter extends ExpandableRecyclerAdapter<ForumListAdapter
             setText(forum, binding.forumTitle, binding.forumSubtitle, binding.sectionTitle);
             setThemeColours(itemView, binding.forumTitle, binding.forumSubtitle);
             handleSubtitles(forum, binding.forumSubtitle);
+
+            parent.setPreferredFont(itemView);
 
             binding.forumFavouriteMarker.setVisibility(forum.isFavourite() ? VISIBLE : GONE);
 

@@ -163,6 +163,7 @@ public class AwfulLoginActivity extends AwfulActivity {
         final String password = NetworkUtils.encodeHtml(mPassword.getText().toString());
 
         mDialog = ProgressDialog.show(AwfulLoginActivity.this, "Logging In", "Hold on...", true);
+        setPreferredFont(mDialog.findViewById(android.R.id.title));
         final AwfulLoginActivity self = this;
         NetworkUtils.queueRequest(new LoginRequest(this, username, password).build(null, new AwfulRequest.AwfulResultCallback<Boolean>() {
             @Override

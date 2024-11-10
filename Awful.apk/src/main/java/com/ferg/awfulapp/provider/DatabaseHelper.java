@@ -20,7 +20,7 @@ import com.ferg.awfulapp.thread.AwfulThread;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "awful.db";
-    private static final int DATABASE_VERSION = 36;
+    private static final int DATABASE_VERSION = 37;
 
     static final String TABLE_FORUM    = "forum";
     static final String TABLE_THREADS    = "threads";
@@ -30,6 +30,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String TABLE_EMOTES    = "emotes";
     static final String TABLE_PM    = "private_messages";
     static final String TABLE_DRAFTS    = "draft_messages";
+    static final String TABLE_THREAD_DRAFTS    = "draft_threads";
 
     public static final String UPDATED_TIMESTAMP    = "timestamp_row_update";
 
@@ -46,6 +47,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         createEmoteTable(aDb);
         createPMTable(aDb);
         createDraftTable(aDb);
+        createThreadDraftTable(aDb);
     }
 
 
@@ -158,6 +160,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 UPDATED_TIMESTAMP + " DATETIME);");
     }
 
+    private void createThreadDraftTable(SQLiteDatabase aDb) {
+        aDb.execSQL("CREATE TABLE " + TABLE_THREAD_DRAFTS + " (" +
+                AwfulMessage.ID + " INTEGER UNIQUE," +
+                AwfulPost.FORM_KEY + " VARCHAR," +
+                AwfulPost.FORM_COOKIE + " VARCHAR," +
+                AwfulMessage.POST_CONTENT      + " VARCHAR," +
+                AwfulMessage.POST_SUBJECT      + " VARCHAR," +
+                AwfulMessage.POST_ICON_ID      + " VARCHAR," +
+                AwfulMessage.POST_ICON_URL      + " VARCHAR," +
+                AwfulPost.FORM_BOOKMARK + " VARCHAR," +
+                AwfulMessage.REPLY_ATTACHMENT + " VARCHAR," +
+                AwfulMessage.EPOC_TIMESTAMP + " INTEGER, " +
+                UPDATED_TIMESTAMP + " DATETIME);");
+    }
+
 
     @Override
     public void onUpgrade(SQLiteDatabase aDb, int aOldVersion, int aNewVersion) {
@@ -188,6 +205,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             case 35:
                 dropTables(aDb, TABLE_POSTS);
                 createPostTable(aDb);
+            case 36:
+                dropTables(aDb, TABLE_THREAD_DRAFTS);
+                createThreadDraftTable(aDb);
                 break;//make sure to keep this break statement on the last case of this switch
             default:
                 wipeRecreateTables(aDb);
@@ -209,7 +229,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void wipeRecreateTables(SQLiteDatabase aDb) {
-        String[] allTables = {TABLE_FORUM, TABLE_THREADS, TABLE_POSTS, TABLE_EMOTES, TABLE_UCP_THREADS, TABLE_PM, TABLE_DRAFTS};
+        String[] allTables = {TABLE_FORUM, TABLE_THREADS, TABLE_POSTS, TABLE_EMOTES, TABLE_UCP_THREADS, TABLE_PM, TABLE_DRAFTS, TABLE_THREAD_DRAFTS};
         dropTables(aDb, allTables);
         onCreate(aDb);
     }

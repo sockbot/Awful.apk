@@ -250,11 +250,25 @@ abstract class AwfulActivity : AppCompatActivity(), AwfulPreferences.AwfulPrefer
     fun showPostComposer(threadId: Int, postType: Int, sourcePostId: Int) {
         // TODO: this should probably all be refactored into types like the NavigationEvents (maybe even rolled in with them) - discrete Posting events with the specific associated data for each
         startActivityForResult(
-                Intent(this, PostReplyActivity::class.java)
-                        .putExtra(Constants.REPLY_THREAD_ID, threadId)
-                        .putExtra(Constants.EDITING, postType)
-                        .putExtra(Constants.REPLY_POST_ID, sourcePostId),
-                PostReplyFragment.REQUEST_POST
+            Intent(this, PostReplyActivity::class.java)
+                .putExtra(Constants.REPLY_THREAD_ID, threadId)
+                .putExtra(Constants.EDITING, postType)
+                .putExtra(Constants.REPLY_POST_ID, sourcePostId),
+            PostReplyFragment.REQUEST_POST
+        )
+    }
+
+    /**
+     * Display the thread composer.
+     *
+     * @param forumId the ID of the forum the thread is in
+     */
+    fun showThreadComposer(forumId: Int) {
+        // TODO: this should probably all be refactored into types like the NavigationEvents (maybe even rolled in with them) - discrete Posting events with the specific associated data for each
+        startActivityForResult(
+            Intent(this, PostThreadActivity::class.java)
+                .putExtra(Constants.POST_FORUM_ID, forumId),
+            PostThreadFragment.REQUEST_THREAD
         )
     }
 
